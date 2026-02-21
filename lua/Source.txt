@@ -1000,77 +1000,172 @@ for _, val in ipairs(config.Selected) do
 end
 
 local optionButtons = {}
+local searchBox = nil
+local searchFrame = nil
 
+if config.SearchEnabled then
+    searchFrame = Instance.new("Frame")
+    searchFrame.Name = "SearchFrame"
+    searchFrame.Parent = DropdownFrame
+    searchFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    searchFrame.BackgroundTransparency = 0.800
+    searchFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    searchFrame.BorderSizePixel = 0
+    searchFrame.Size = UDim2.new(0.949999988, 0, 0, 25)
+    searchFrame.Position = UDim2.new(0.5, 0, 0.08, 0)
+    searchFrame.AnchorPoint = Vector2.new(0.5, 0)
+    searchFrame.ZIndex = 110
+    
+    local searchCorner = Instance.new("UICorner")
+    searchCorner.CornerRadius = UDim.new(0, 3)
+    searchCorner.Parent = searchFrame
+    
+    local searchIcon = Instance.new("ImageLabel")
+    searchIcon.Name = "SearchIcon"
+    searchIcon.Parent = searchFrame
+    searchIcon.AnchorPoint = Vector2.new(0, 0.5)
+    searchIcon.BackgroundTransparency = 1.000
+    searchIcon.Position = UDim2.new(0.03, 0, 0.5, 0)
+    searchIcon.Size = UDim2.new(0, 15, 0, 15)
+    searchIcon.ZIndex = 111
+    searchIcon.Image = "rbxassetid://6031280882"
+    searchIcon.ImageTransparency = 0.500
+    
+    searchBox = Instance.new("TextBox")
+    searchBox.Name = "SearchBox"
+    searchBox.Parent = searchFrame
+    searchBox.AnchorPoint = Vector2.new(0, 0.5)
+    searchBox.BackgroundTransparency = 1.000
+    searchBox.Position = UDim2.new(0.12, 0, 0.5, 0)
+    searchBox.Size = UDim2.new(0.85, 0, 0.9, 0)
+    searchBox.ZIndex = 111
+    searchBox.Font = Enum.Font.GothamBold
+    searchBox.PlaceholderText = "Search..."
+    searchBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+    searchBox.Text = ""
+    searchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    searchBox.TextSize = 12.000
+    searchBox.TextTransparency = 0.250
+    searchBox.TextXAlignment = Enum.TextXAlignment.Left
+    searchBox.ClearTextOnFocus = false
+    
+    local searchStroke = Instance.new("UIStroke")
+    searchStroke.Transparency = 0.975
+    searchStroke.Color = Color3.fromRGB(255, 255, 255)
+    searchStroke.Parent = searchFrame
+    
+    local function updateOptionsPosition()
+        ScrollingFrame.Position = UDim2.new(0.5, 0, 0.25, 0)
+        ScrollingFrame.Size = UDim2.new(0.949999988, 0, 0.7, 0)
+    end
+    updateOptionsPosition()
+else
+    ScrollingFrame.Position = UDim2.new(0.5, 0, 0.555985212, 0)
+    ScrollingFrame.Size = UDim2.new(0.949999988, 0, 0.888029099, 0)
+end
+
+local allOptions = {}
 for i, optionName in ipairs(config.Data) do
-    local isSelected = false
+    table.insert(allOptions, optionName)
+end
+
+local function filterOptions(searchText)
+    for i,v in pairs(ScrollingFrame:GetChildren()) do
+        if v ~= Block and v:IsA('Frame') then
+            v:Destroy();
+        end;
+    end;
     
-    if config.AllowMulti then
-        isSelected = selectedLookup[optionName] == true
-    else
-        isSelected = config.Selected[1] == optionName
+    optionButtons = {}
+    
+    local filteredOptions = {}
+    searchText = searchText:lower()
+    
+    for _, optionName in ipairs(allOptions) do
+        if searchText == "" or optionName:lower():find(searchText, 1, true) then
+            table.insert(filteredOptions, optionName)
+        end
     end
     
-    local butt = GetSelector(tostring(optionName), isSelected);
-    
-    optionButtons[optionName] = butt.effect
-    
-    if config.OnOptionCreated then
-        config.OnOptionCreated(optionName, function(state)
-            butt.effect(state)
-        end)
-    end
-    
-    butt.button.MouseButton1Click:Connect(function()
+    for _, optionName in ipairs(filteredOptions) do
+        local isSelected = false
+        
         if config.AllowMulti then
-            local currentState = not selectedLookup[optionName]
-            butt.effect(currentState)
-            
-            if config.OnOptionSelected then
-                config.OnOptionSelected(optionName, currentState)
-            end
-            
-            if currentState then
-                selectedLookup[optionName] = true
-            else
-                selectedLookup[optionName] = nil
-            end
-            
-            if not config.AllowNone then
-                local hasAnySelected = false
-                for _, val in ipairs(config.Data) do
-                    if selectedLookup[val] then
-                        hasAnySelected = true
-                        break
-                    end
+            isSelected = selectedLookup[optionName] == true
+        else
+            isSelected = config.Selected[1] == optionName
+        end
+        
+        local butt = GetSelector(tostring(optionName), isSelected);
+        
+        optionButtons[optionName] = butt.effect
+        
+        if config.OnOptionCreated then
+            config.OnOptionCreated(optionName, function(state)
+                butt.effect(state)
+            end)
+        end
+        
+        butt.button.MouseButton1Click:Connect(function()
+            if config.AllowMulti then
+                local currentState = not selectedLookup[optionName]
+                butt.effect(currentState)
+                
+                if config.OnOptionSelected then
+                    config.OnOptionSelected(optionName, currentState)
                 end
                 
-                if not hasAnySelected then
+                if currentState then
                     selectedLookup[optionName] = true
-                    butt.effect(true)
+                else
+                    selectedLookup[optionName] = nil
+                end
+                
+                if not config.AllowNone then
+                    local hasAnySelected = false
+                    for _, val in ipairs(config.Data) do
+                        if selectedLookup[val] then
+                            hasAnySelected = true
+                            break
+                        end
+                    end
+                    
+                    if not hasAnySelected then
+                        selectedLookup[optionName] = true
+                        butt.effect(true)
+                        if config.OnOptionSelected then
+                            config.OnOptionSelected(optionName, true)
+                        end
+                    end
+                end
+            else
+                if optionName == config.Selected[1] and config.AllowNone then
+                    for name, effectFunc in pairs(optionButtons) do
+                        effectFunc(false)
+                    end
+                    if config.OnOptionSelected then
+                        config.OnOptionSelected(optionName, false)
+                    end
+                elseif optionName ~= config.Selected[1] then
+                    for name, effectFunc in pairs(optionButtons) do
+                        effectFunc(name == optionName)
+                    end
                     if config.OnOptionSelected then
                         config.OnOptionSelected(optionName, true)
                     end
                 end
             end
-        else
-            if optionName == config.Selected[1] and config.AllowNone then
-                for name, effectFunc in pairs(optionButtons) do
-                    effectFunc(false)
-                end
-                if config.OnOptionSelected then
-                    config.OnOptionSelected(optionName, false)
-                end
-            elseif optionName ~= config.Selected[1] then
-                for name, effectFunc in pairs(optionButtons) do
-                    effectFunc(name == optionName)
-                end
-                if config.OnOptionSelected then
-                    config.OnOptionSelected(optionName, true)
-                end
-            end
-        end
+        end)
+    end
+end
+
+if searchBox then
+    searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+        filterOptions(searchBox.Text)
     end)
 end
+
+filterOptions("")
 end;
 
 local MouseInFrame = false;
@@ -3388,6 +3483,7 @@ Data = {'One','Two','Three','Four'},
 Default = 'Two',
 AllowMulti = false,
 AllowNone = false,
+SearchEnabled = false,
 Callback = function(a)
 end,
 });
@@ -3644,6 +3740,7 @@ Button.MouseButton1Click:Connect(function()
         Selected = selectedValues,
         AllowMulti = drop.AllowMulti,
         AllowNone = drop.AllowNone,
+        SearchEnabled = drop.SearchEnabled,
         OnOptionCreated = function(optionName, setSelectedFunc)
             optionButtons[optionName] = setSelectedFunc
             if drop.AllowMulti then
