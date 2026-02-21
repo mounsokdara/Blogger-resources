@@ -377,6 +377,23 @@ ConfigFolder = "SugarConfigs"
 local TweenInfo1 = TweenInfo.new(0.5,Enum.EasingStyle.Quint,Enum.EasingDirection.InOut);
 local TweenInfo2 = TweenInfo.new(0.3,Enum.EasingStyle.Quint,Enum.EasingDirection.InOut);
 local WindowTable = {};
+local Drag = {
+	Dragging = false,
+	Frame = nil,
+	FramePosition = nil,
+	StartPosition = nil,
+	ChangedConnection = nil,
+}
+
+local Helper = {
+	IsClickInput = function(Input)
+		return Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch
+	end,
+	
+	IsMoveInput = function(Input)
+		return Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch
+	end
+}
 local ScreenGui = Instance.new("ScreenGui")
 local MainFrame = Instance.new("Frame")
 local UICorner = Instance.new("UICorner")
@@ -473,6 +490,50 @@ if isMobile then
 ImageButton.Size = UDim2.new(0.12, 0, 0.12, 0)
 end
 local function Update()
+MainFrame.InputBegan:Connect(function(Input)
+	if not Helper.IsClickInput(Input) then return end
+	if Input.UserInputState ~= Enum.UserInputState.Begin then return end
+	
+	Drag.Dragging = true
+	Drag.Frame = MainFrame
+	Drag.FramePosition = MainFrame.Position
+	Drag.StartPosition = Input.Position
+	
+	Drag.ChangedConnection = Input.Changed:Connect(function()
+		if Input.UserInputState == Enum.UserInputState.End then
+			Drag.Dragging = false
+			Drag.Frame = nil
+			
+			if Drag.ChangedConnection then
+				Drag.ChangedConnection:Disconnect()
+				Drag.ChangedConnection = nil
+			end
+		end
+	end)
+end)
+
+local UserInputService = game:GetService("UserInputService")
+UserInputService.InputChanged:Connect(function(Input)
+	if not Drag.Dragging then return end
+	if not Helper.IsMoveInput(Input) then return end
+	if Input.UserInputState ~= Enum.UserInputState.Change then return end
+	
+	local Delta = Input.Position - Drag.StartPosition
+	local FramePosition = Drag.FramePosition
+	
+	if wax and wax.shared and wax.shared.GetDPIScale then
+		Delta = Delta / wax.shared.GetDPIScale()
+	end
+	
+	MainFrame.Position = UDim2.new(
+		FramePosition.X.Scale,
+		FramePosition.X.Offset + Delta.X,
+		FramePosition.Y.Scale,
+		FramePosition.Y.Offset + Delta.Y
+	)
+	
+	WindowTable.LastPosition = MainFrame.Position
+end)
 if WindowTable.WindowToggle then
 Twen:Create(MainFrame,TweenInfo.new(0.7,Enum.EasingStyle.Quint),{BackgroundTransparency = 0.4,Size = config.Size}):Play();
 Twen:Create(MainDropShadow,TweenInfo1,{ImageTransparency = 0.6}):Play();
@@ -4070,7 +4131,39 @@ return SectionTable;
 end;
 return TabTable;
 end;
-
+local dragToggle = nil;
+local dragSpeed = 0.1;
+local dragStart = nil;
+local startPos = nil;
+local function updateInput(input)
+WindowTable.ElBlurUI.Update()
+local delta = input.Position - dragStart;
+local position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
+startPos.Y.Scale, startPos.Y.Offset + delta.Y);
+game:GetService('TweenService'):Create(MainFrame, TweenInfo.new(dragSpeed), {Position = position}):Play()
+if not WindowTable.WindowToggle then
+WindowTable.LastPosition = position 
+end
+end;
+InputFrame.InputBegan:Connect(function(input)
+if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+dragToggle = true
+dragStart = input.Position
+startPos = MainFrame.Position
+input.Changed:Connect(function()
+if input.UserInputState == Enum.UserInputState.End then
+dragToggle = false;
+end;
+end)
+end;
+end)
+Input.InputChanged:Connect(function(input)
+if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+if dragToggle then
+updateInput(input);
+end;
+end;
+end)
 WindowTable.SetKeybind = function(newKey)
     WindowTable.Keybind = newKey
 end
@@ -4154,87 +4247,6 @@ Twen:Create(MainFrame,TweenInfo.new(1,Enum.EasingStyle.Quint,Enum.EasingDirectio
 Position = UDim2.new(0.5, 0, 0.5, 0),
 Size = UDim2.new(1, 0, 1, 0)
 }):Play();
--- Add this right after the MainFrame is created (around line 450-460 in your code)
--- Look for this section:
--- MainFrame.Name = "MainFrame"
--- MainFrame.Parent = ScreenGui
-
--- Add this drag system right after MainFrame is parented:
-
--- Drag System for MainFrame
-local Drag = {
-	Dragging = false,
-	Frame = nil,
-	FramePosition = nil,
-	StartPosition = nil,
-	ChangedConnection = nil,
-}
-
--- Make the entire MainFrame draggable by clicking and holding anywhere on it
-MainFrame.InputBegan:Connect(function(Input)
-	-- Only start dragging on mouse button 1 or touch
-	if Input.UserInputType ~= Enum.UserInputType.MouseButton1 
-		and Input.UserInputType ~= Enum.UserInputType.Touch then
-		return
-	end
-	
-	-- Only start if it's a Begin state (actual press, not hover)
-	if Input.UserInputState ~= Enum.UserInputState.Begin then
-		return
-	end
-	
-	Drag.Dragging = true
-	Drag.Frame = MainFrame
-	Drag.FramePosition = MainFrame.Position
-	Drag.StartPosition = Input.Position
-	
-	Drag.ChangedConnection = Input.Changed:Connect(function()
-		if Input.UserInputState == Enum.UserInputState.End then
-			Drag.Dragging = false
-			Drag.Frame = nil
-			
-			if Drag.ChangedConnection then
-				Drag.ChangedConnection:Disconnect()
-				Drag.ChangedConnection = nil
-			end
-		end
-	end)
-end)
-
--- Handle the dragging movement
-UserInputService.InputChanged:Connect(function(Input)
-	if not Drag.Dragging then return end
-	
-	-- Only move on mouse movement or touch drag
-	if Input.UserInputType ~= Enum.UserInputType.MouseMovement 
-		and Input.UserInputType ~= Enum.UserInputType.Touch then
-		return
-	end
-	
-	-- Only move if still in Change state (being held)
-	if Input.UserInputState ~= Enum.UserInputState.Change then
-		return
-	end
-	
-	local Delta = Input.Position - Drag.StartPosition
-	local FramePosition = Drag.FramePosition
-	
-	-- Apply DPI scaling if available
-	if wax and wax.shared and wax.shared.GetDPIScale then
-		Delta = Delta / wax.shared.GetDPIScale()
-	end
-	
-	-- Move the frame
-	MainFrame.Position = UDim2.new(
-		FramePosition.X.Scale,
-		FramePosition.X.Offset + Delta.X,
-		FramePosition.Y.Scale,
-		FramePosition.Y.Offset + Delta.Y
-	)
-	
-	-- Store the last position for minimized state
-	WindowTable.LastPosition = MainFrame.Position
-end)
 BlockFrame.Name = "BlockFrame"
 BlockFrame.Parent = MainFrame
 BlockFrame.AnchorPoint = Vector2.new(0.5, 0.5)
