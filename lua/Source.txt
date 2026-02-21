@@ -1053,24 +1053,46 @@ for i, optionName in ipairs(config.Data) do
                 end
             end
         else
-            if config.Selected[1] == optionName and config.AllowNone then
+            local isCurrentlySelected = (config.Selected[1] == optionName)
+            local newState = not isCurrentlySelected
+            
+            if newState or config.AllowNone then
                 for name, effectFunc in pairs(optionButtons) do
-                    effectFunc(false)
+                    effectFunc(name == optionName and newState)
                 end
+                
                 if config.OnOptionSelected then
-                    config.OnOptionSelected(optionName, false)
-                end
-            elseif config.Selected[1] ~= optionName then
-                for name, effectFunc in pairs(optionButtons) do
-                    effectFunc(name == optionName)
-                end
-                if config.OnOptionSelected then
-                    config.OnOptionSelected(optionName, true)
+                    config.OnOptionSelected(optionName, newState)
                 end
             end
         end
     end)
 end
+
+-- Add click outside to close
+local function onInputBegan(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        local pos = Vector2.new(input.Position.X, input.Position.Y)
+        local dropdownPos = DropdownFrame.AbsolutePosition
+        local dropdownSize = DropdownFrame.AbsoluteSize
+        
+        if pos.X < dropdownPos.X or pos.X > dropdownPos.X + dropdownSize.X or
+           pos.Y < dropdownPos.Y or pos.Y > dropdownPos.Y + dropdownSize.Y then
+            WindowTable.Dropdown:Close()
+        end
+    end
+end
+
+local connection
+connection = Input.InputBegan:Connect(function(input)
+    if Looped then
+        onInputBegan(input)
+    else
+        if connection then
+            connection:Disconnect()
+        end
+    end
+end)
 end;
 
 local MouseInFrame = false;
@@ -3609,15 +3631,18 @@ local function handleSelection(optionName, isSelected)
         drop.Callback(selectedValues)
     else
         if isSelected then
-            if selectedValues[1] == optionName and drop.AllowNone then
+            if #selectedValues > 0 and selectedValues[1] == optionName and drop.AllowNone then
                 selectedValues = {}
                 selectedLookup = {}
                 if optionButtons[optionName] then
                     optionButtons[optionName](false)
                 end
-            elseif selectedValues[1] ~= optionName then
-                if selectedValues[1] and optionButtons[selectedValues[1]] then
-                    optionButtons[selectedValues[1]](false)
+            elseif #selectedValues == 0 or selectedValues[1] ~= optionName then
+                if #selectedValues > 0 then
+                    local oldValue = selectedValues[1]
+                    if optionButtons[oldValue] then
+                        optionButtons[oldValue](false)
+                    end
                 end
                 selectedValues = {optionName}
                 selectedLookup = {[optionName] = true}
