@@ -774,6 +774,7 @@ local Block = Instance.new("Frame")
 local BlockFrame3 = Instance.new("Frame")
 local UICorner_2 = Instance.new("UICorner")
 local UIGradient = Instance.new("UIGradient")
+
 DropdownFrame.Name = "DropdownFrame"
 DropdownFrame.Parent = ScreenGui
 DropdownFrame.BackgroundColor3 = Color3.fromRGB(17, 17, 17)
@@ -784,8 +785,10 @@ DropdownFrame.Position = UDim2.new(0, 289, 0, 213)
 DropdownFrame.Size = UDim2.new(0, 150, 0, 145)
 DropdownFrame.ZIndex = 100
 DropdownFrame.Visible = false;
+
 UICorner.CornerRadius = UDim.new(0, 4)
 UICorner.Parent = DropdownFrame
+
 MiniDropShadow.Name = "MiniDropShadow"
 MiniDropShadow.Parent = DropdownFrame
 MiniDropShadow.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -799,9 +802,11 @@ MiniDropShadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
 MiniDropShadow.ImageTransparency = 0.600
 MiniDropShadow.ScaleType = Enum.ScaleType.Slice
 MiniDropShadow.SliceCenter = Rect.new(49, 49, 450, 450)
+
 UIStroke.Transparency = 0.900
 UIStroke.Color = Color3.fromRGB(255, 255, 255)
 UIStroke.Parent = DropdownFrame
+
 ValueId.Name = "ValueId"
 ValueId.Parent = DropdownFrame
 ValueId.AnchorPoint = Vector2.new(0.5, 0)
@@ -809,8 +814,8 @@ ValueId.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 ValueId.BackgroundTransparency = 1.000
 ValueId.BorderColor3 = Color3.fromRGB(0, 0, 0)
 ValueId.BorderSizePixel = 0
-ValueId.Position = UDim2.new(0.5, 0, 0, 0)
-ValueId.Size = UDim2.new(0.970000029, 0, 0.5, 0)
+ValueId.Position = UDim2.new(0.5, 0, 0, 5)
+ValueId.Size = UDim2.new(0.95, 0, 0, 25)
 ValueId.ZIndex = 101
 ValueId.Font = Enum.Font.GothamBold
 ValueId.Text = "NONE"
@@ -820,22 +825,21 @@ ValueId.TextSize = 14.000
 ValueId.TextTransparency = 0.800
 ValueId.TextWrapped = true
 ValueId.TextXAlignment = Enum.TextXAlignment.Right
-UIAspectRatioConstraint.Parent = ValueId
-UIAspectRatioConstraint.AspectRatio = 15.000
-UIAspectRatioConstraint.AspectType = Enum.AspectType.ScaleWithParentSize
+
 ScrollingFrame.Parent = DropdownFrame
 ScrollingFrame.Active = true
-ScrollingFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+ScrollingFrame.AnchorPoint = Vector2.new(0.5, 0)
 ScrollingFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 ScrollingFrame.BackgroundTransparency = 1.000
 ScrollingFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
 ScrollingFrame.BorderSizePixel = 0
-ScrollingFrame.Position = UDim2.new(0.5, 0, 0.555985212, 0)
-ScrollingFrame.Size = UDim2.new(0.949999988, 0, 0.888029099, 0)
+ScrollingFrame.Position = UDim2.new(0.5, 0, 0, 35)
+ScrollingFrame.Size = UDim2.new(0.95, 0, 0.9, -40)
 ScrollingFrame.ZIndex = 102
 ScrollingFrame.BottomImage = ""
 ScrollingFrame.ScrollBarThickness = 1
 ScrollingFrame.TopImage = ""
+
 UIListLayout:GetPropertyChangedSignal('AbsoluteContentSize'):Connect(function()
 ScrollingFrame.CanvasSize = UDim2.fromOffset(0,UIListLayout.AbsoluteContentSize.Y)
 end)
@@ -843,12 +847,14 @@ UIListLayout.Parent = ScrollingFrame
 UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 UIListLayout.Padding = UDim.new(0, 4)
+
 Block.Name = "Block"
 Block.Parent = ScrollingFrame
 Block.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 Block.BackgroundTransparency = 1.000
 Block.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Block.BorderSizePixel = 0
+
 BlockFrame3.Name = "BlockFrame3"
 BlockFrame3.Parent = DropdownFrame
 BlockFrame3.AnchorPoint = Vector2.new(0, 0.5)
@@ -859,6 +865,12 @@ BlockFrame3.BorderSizePixel = 0
 BlockFrame3.Position = UDim2.new(0, 0, 0.0799999982, 0)
 BlockFrame3.Size = UDim2.new(1, 0, 0, 1)
 BlockFrame3.ZIndex = 102
+
+UICorner_2.CornerRadius = UDim.new(0.5, 0)
+UICorner_2.Parent = BlockFrame3
+
+UIGradient.Transparency = NumberSequence.new{NumberSequenceKeypoint.new(0.00, 1.00), NumberSequenceKeypoint.new(0.03, 0.00), NumberSequenceKeypoint.new(0.98, 0.00), NumberSequenceKeypoint.new(1.00, 1.00)}
+UIGradient.Parent = BlockFrame3
 UICorner_2.CornerRadius = UDim.new(0.5, 0)
 UICorner_2.Parent = BlockFrame3
 UIGradient.Transparency = NumberSequence.new{NumberSequenceKeypoint.new(0.00, 1.00), NumberSequenceKeypoint.new(0.03, 0.00), NumberSequenceKeypoint.new(0.98, 0.00), NumberSequenceKeypoint.new(1.00, 1.00)}
@@ -988,12 +1000,12 @@ for i,v in pairs(ScrollingFrame:GetChildren()) do
     end;
 end;
 
--- Create search bar if enabled
-local SearchBox = nil
-if config.SearchEnabled then
-    -- Hide the ValueId when search is enabled
-    ValueId.Visible = false
-    
+-- Hide ValueId and adjust layout for search
+ValueId.Visible = false
+
+-- Create or get search box
+local SearchBox = DropdownFrame:FindFirstChild("SearchBox")
+if not SearchBox then
     SearchBox = Instance.new("TextBox")
     SearchBox.Name = "SearchBox"
     SearchBox.Parent = DropdownFrame
@@ -1013,6 +1025,7 @@ if config.SearchEnabled then
     SearchBox.TextSize = 14.000
     SearchBox.TextTransparency = 0.2
     SearchBox.ClearTextOnFocus = false
+    SearchBox.Visible = config.SearchEnabled or false
     
     local SearchCorner = Instance.new("UICorner")
     SearchCorner.CornerRadius = UDim.new(0, 4)
@@ -1022,13 +1035,18 @@ if config.SearchEnabled then
     SearchStroke.Transparency = 0.8
     SearchStroke.Color = Color3.fromRGB(255, 255, 255)
     SearchStroke.Parent = SearchBox
-    
-    -- Adjust ScrollingFrame position
+else
+    SearchBox.Visible = config.SearchEnabled or false
+    SearchBox.Text = ""
+end
+
+-- Adjust ScrollingFrame position based on search visibility
+if config.SearchEnabled then
     ScrollingFrame.Position = UDim2.new(0.5, 0, 0, 35)
     ScrollingFrame.Size = UDim2.new(0.95, 0, 0.85, -35)
 else
-    ScrollingFrame.Position = UDim2.new(0.5, 0, 0.555985212, 0)
-    ScrollingFrame.Size = UDim2.new(0.949999988, 0, 0.888029099, 0)
+    ScrollingFrame.Position = UDim2.new(0.5, 0, 0, 5)
+    ScrollingFrame.Size = UDim2.new(0.95, 0, 0.95, -5)
 end
 
 Twen:Create(ScrollingFrame,TweenInfo.new(0.3),{
@@ -1146,7 +1164,7 @@ end
 refreshOptions(allOptions)
 
 -- Connect search if enabled
-if SearchBox then
+if config.SearchEnabled then
     SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
         local filtered = filterOptions(SearchBox.Text)
         refreshOptions(filtered)
@@ -1224,12 +1242,19 @@ ScrollBarImageTransparency = 1;
 Twen:Create(BlockFrame3,TweenInfo.new(0.3),{
 BackgroundTransparency = 1;
 }):Play()
+
+-- Hide search box when closing
+local SearchBox = DropdownFrame:FindFirstChild("SearchBox")
+if SearchBox then
+    SearchBox.Visible = false
+end
+
 for i,v in pairs(ScrollingFrame:GetChildren()) do
-if v ~= Block then
-if v:IsA('Frame') then
-v:Destroy();
-end;
-end;
+    if v ~= Block then
+        if v:IsA('Frame') then
+            v:Destroy();
+        end;
+    end;
 end;
 end;
 DropdownFrame.MouseEnter:Connect(function()
