@@ -766,6 +766,7 @@ local DropdownFrame = Instance.new("Frame")
 local UICorner = Instance.new("UICorner")
 local MiniDropShadow = Instance.new("ImageLabel")
 local UIStroke = Instance.new("UIStroke")
+local TitleLabel = Instance.new("TextLabel") -- New title label
 local ValueId = Instance.new("TextLabel")
 local UIAspectRatioConstraint = Instance.new("UIAspectRatioConstraint")
 local ScrollingFrame = Instance.new("ScrollingFrame")
@@ -807,6 +808,26 @@ UIStroke.Transparency = 0.900
 UIStroke.Color = Color3.fromRGB(255, 255, 255)
 UIStroke.Parent = DropdownFrame
 
+-- Title Label
+TitleLabel.Name = "TitleLabel"
+TitleLabel.Parent = DropdownFrame
+TitleLabel.AnchorPoint = Vector2.new(0.5, 0)
+TitleLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.BackgroundTransparency = 1.000
+TitleLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+TitleLabel.BorderSizePixel = 0
+TitleLabel.Position = UDim2.new(0.5, 0, 0, 2)
+TitleLabel.Size = UDim2.new(0.95, 0, 0, 20)
+TitleLabel.ZIndex = 101
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.Text = "Select Option"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.TextScaled = true
+TitleLabel.TextSize = 14.000
+TitleLabel.TextTransparency = 0.3
+TitleLabel.TextWrapped = true
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Center
+
 ValueId.Name = "ValueId"
 ValueId.Parent = DropdownFrame
 ValueId.AnchorPoint = Vector2.new(0.5, 0)
@@ -814,7 +835,7 @@ ValueId.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 ValueId.BackgroundTransparency = 1.000
 ValueId.BorderColor3 = Color3.fromRGB(0, 0, 0)
 ValueId.BorderSizePixel = 0
-ValueId.Position = UDim2.new(0.5, 0, 0, 5)
+ValueId.Position = UDim2.new(0.5, 0, 0, 22)
 ValueId.Size = UDim2.new(0.95, 0, 0, 25)
 ValueId.ZIndex = 101
 ValueId.Font = Enum.Font.GothamBold
@@ -833,8 +854,8 @@ ScrollingFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 ScrollingFrame.BackgroundTransparency = 1.000
 ScrollingFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
 ScrollingFrame.BorderSizePixel = 0
-ScrollingFrame.Position = UDim2.new(0.5, 0, 0, 35)
-ScrollingFrame.Size = UDim2.new(0.95, 0, 0.9, -40)
+ScrollingFrame.Position = UDim2.new(0.5, 0, 0, 52)
+ScrollingFrame.Size = UDim2.new(0.95, 0, 0.85, -57)
 ScrollingFrame.ZIndex = 102
 ScrollingFrame.BottomImage = ""
 ScrollingFrame.ScrollBarThickness = 1
@@ -978,6 +999,13 @@ end;
 
 function WindowTable.Dropdown:OpenMulti(config)
 Looped = true;
+
+-- Set the title
+local TitleLabel = DropdownFrame:FindFirstChild("TitleLabel")
+if TitleLabel then
+    TitleLabel.Text = config.Title or "Select Option"
+end
+
 ValueId.Text = config.AllowMulti and "Select items..." or (config.Selected[1] or "...")
 Twen:Create(DropdownFrame,TweenInfo.new(0.3),{
 BackgroundTransparency = 0.1;
@@ -1000,8 +1028,11 @@ for i,v in pairs(ScrollingFrame:GetChildren()) do
     end;
 end;
 
--- Hide ValueId and adjust layout for search
+-- Hide ValueId and show title
 ValueId.Visible = false
+if TitleLabel then
+    TitleLabel.Visible = true
+end
 
 -- Create or get search box
 local SearchBox = DropdownFrame:FindFirstChild("SearchBox")
@@ -1014,7 +1045,7 @@ if not SearchBox then
     SearchBox.BackgroundTransparency = 0.3
     SearchBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
     SearchBox.BorderSizePixel = 0
-    SearchBox.Position = UDim2.new(0.5, 0, 0, 5)
+    SearchBox.Position = UDim2.new(0.5, 0, 0, 47)
     SearchBox.Size = UDim2.new(0.95, 0, 0, 25)
     SearchBox.ZIndex = 110
     SearchBox.Font = Enum.Font.GothamBold
@@ -1038,15 +1069,16 @@ if not SearchBox then
 else
     SearchBox.Visible = config.SearchEnabled or false
     SearchBox.Text = ""
+    SearchBox.Position = UDim2.new(0.5, 0, 0, 47)
 end
 
 -- Adjust ScrollingFrame position based on search visibility
 if config.SearchEnabled then
-    ScrollingFrame.Position = UDim2.new(0.5, 0, 0, 35)
-    ScrollingFrame.Size = UDim2.new(0.95, 0, 0.85, -35)
+    ScrollingFrame.Position = UDim2.new(0.5, 0, 0, 77)
+    ScrollingFrame.Size = UDim2.new(0.95, 0, 0.8, -82)
 else
-    ScrollingFrame.Position = UDim2.new(0.5, 0, 0, 5)
-    ScrollingFrame.Size = UDim2.new(0.95, 0, 0.95, -5)
+    ScrollingFrame.Position = UDim2.new(0.5, 0, 0, 47)
+    ScrollingFrame.Size = UDim2.new(0.95, 0, 0.85, -52)
 end
 
 Twen:Create(ScrollingFrame,TweenInfo.new(0.3),{
@@ -1243,7 +1275,12 @@ Twen:Create(BlockFrame3,TweenInfo.new(0.3),{
 BackgroundTransparency = 1;
 }):Play()
 
--- Hide search box when closing
+-- Hide title and search box when closing
+local TitleLabel = DropdownFrame:FindFirstChild("TitleLabel")
+if TitleLabel then
+    TitleLabel.Visible = false
+end
+
 local SearchBox = DropdownFrame:FindFirstChild("SearchBox")
 if SearchBox then
     SearchBox.Visible = false
@@ -3747,24 +3784,24 @@ Button.MouseButton1Click:Connect(function()
     optionButtons = {}
     
     WindowTable.Dropdown:OpenMulti({
-        Data = drop.Data,
-        Selected = selectedValues,
-        AllowMulti = drop.AllowMulti,
-        AllowNone = drop.AllowNone,
-        SearchEnabled = drop.SearchEnabled, -- Pass the search option
-        OnOptionCreated = function(optionName, setSelectedFunc)
-            optionButtons[optionName] = setSelectedFunc
-            if drop.AllowMulti then
-                setSelectedFunc(selectedLookup[optionName] == true)
-            else
-                setSelectedFunc(selectedValues[1] == optionName)
-            end
-        end,
-        OnOptionSelected = function(optionName, isSelected)
-            handleSelection(optionName, isSelected)
+    Title = drop.Title, -- Add this line
+    Data = drop.Data,
+    Selected = selectedValues,
+    AllowMulti = drop.AllowMulti,
+    AllowNone = drop.AllowNone,
+    SearchEnabled = drop.SearchEnabled,
+    OnOptionCreated = function(optionName, setSelectedFunc)
+        optionButtons[optionName] = setSelectedFunc
+        if drop.AllowMulti then
+            setSelectedFunc(selectedLookup[optionName] == true)
+        else
+            setSelectedFunc(selectedValues[1] == optionName)
         end
-    })
-end)
+    end,
+    OnOptionSelected = function(optionName, isSelected)
+        handleSelection(optionName, isSelected)
+    end
+})
 
 local el = {
 Name = drop.Name,
