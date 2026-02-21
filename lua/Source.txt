@@ -980,6 +980,10 @@ Twen:Create(UIStroke,TweenInfo.new(0.3),{
 Transparency = 0.9;
 }):Play()
 
+-- Store search box reference for cleanup
+local SearchBox = nil
+
+-- Clear existing content
 for i,v in pairs(ScrollingFrame:GetChildren()) do
     if v ~= Block then
         if v:IsA('Frame') then
@@ -988,10 +992,15 @@ for i,v in pairs(ScrollingFrame:GetChildren()) do
     end;
 end;
 
+-- Remove any existing search box
+for i,v in pairs(DropdownFrame:GetChildren()) do
+    if v.Name == "SearchBox" then
+        v:Destroy();
+    end;
+end;
+
 -- Create search bar if enabled
-local SearchBox = nil
 if config.SearchEnabled then
-    -- Hide the ValueId when search is enabled
     ValueId.Visible = false
     
     SearchBox = Instance.new("TextBox")
@@ -1002,8 +1011,8 @@ if config.SearchEnabled then
     SearchBox.BackgroundTransparency = 0.3
     SearchBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
     SearchBox.BorderSizePixel = 0
-    SearchBox.Position = UDim2.new(0.5, 0, 0, 5)
-    SearchBox.Size = UDim2.new(0.95, 0, 0, 25)
+    SearchBox.Position = UDim2.new(0.5, 0, 0, 8)
+    SearchBox.Size = UDim2.new(0.92, 0, 0, 28)
     SearchBox.ZIndex = 110
     SearchBox.Font = Enum.Font.GothamBold
     SearchBox.PlaceholderText = "Search..."
@@ -1023,12 +1032,14 @@ if config.SearchEnabled then
     SearchStroke.Color = Color3.fromRGB(255, 255, 255)
     SearchStroke.Parent = SearchBox
     
-    -- Adjust ScrollingFrame position
-    ScrollingFrame.Position = UDim2.new(0.5, 0, 0, 35)
-    ScrollingFrame.Size = UDim2.new(0.95, 0, 0.85, -35)
+    -- Adjust ValueId and ScrollingFrame positions
+    ValueId.Position = UDim2.new(0.5, 0, 0, 40)
+    ScrollingFrame.Position = UDim2.new(0.5, 0, 0, 70)
+    ScrollingFrame.Size = UDim2.new(0.92, 0, 0.8, -70)
 else
+    ValueId.Position = UDim2.new(0.5, 0, 0, 0)
     ScrollingFrame.Position = UDim2.new(0.5, 0, 0.555985212, 0)
-    ScrollingFrame.Size = UDim2.new(0.949999988, 0, 0.888029099, 0)
+    ScrollingFrame.Size = UDim2.new(0.92, 0, 0.888029099, 0)
 end
 
 Twen:Create(ScrollingFrame,TweenInfo.new(0.3),{
@@ -1152,6 +1163,24 @@ if SearchBox then
         refreshOptions(filtered)
     end)
 end
+
+-- Store cleanup function
+local function Cleanup()
+    if SearchBox then
+        SearchBox:Destroy()
+        SearchBox = nil
+    end
+    ValueId.Visible = true
+    ValueId.Position = UDim2.new(0.5, 0, 0, 0)
+end
+
+-- Override the close function temporarily
+local originalClose = WindowTable.Dropdown.Close
+WindowTable.Dropdown.Close = function(...)
+    Cleanup()
+    originalClose(...)
+    WindowTable.Dropdown.Close = originalClose
+end
 end;
 
 local MouseInFrame = false;
@@ -1206,6 +1235,18 @@ end;
 end;
 function WindowTable.Dropdown:Close(args)
 Looped = false;
+
+-- Clean up search box if it exists
+for i,v in pairs(DropdownFrame:GetChildren()) do
+    if v.Name == "SearchBox" then
+        v:Destroy();
+    end;
+end;
+
+-- Reset ValueId position
+ValueId.Position = UDim2.new(0.5, 0, 0, 0)
+ValueId.Visible = true
+
 Twen:Create(UIStroke,TweenInfo.new(0.3),{
 Transparency = 1;
 }):Play()
@@ -1224,13 +1265,19 @@ ScrollBarImageTransparency = 1;
 Twen:Create(BlockFrame3,TweenInfo.new(0.3),{
 BackgroundTransparency = 1;
 }):Play()
+
+-- Clear options
 for i,v in pairs(ScrollingFrame:GetChildren()) do
-if v ~= Block then
-if v:IsA('Frame') then
-v:Destroy();
+    if v ~= Block then
+        if v:IsA('Frame') then
+            v:Destroy();
+        end;
+    end;
 end;
-end;
-end;
+
+-- Reset ScrollingFrame position
+ScrollingFrame.Position = UDim2.new(0.5, 0, 0.555985212, 0)
+ScrollingFrame.Size = UDim2.new(0.949999988, 0, 0.888029099, 0)
 end;
 DropdownFrame.MouseEnter:Connect(function()
 MouseInMyFrame = true
