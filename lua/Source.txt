@@ -963,7 +963,6 @@ Selector:Destroy()
 end,
 }
 end;
-
 function WindowTable.Dropdown:OpenMulti(config)
 Looped = true;
 ValueId.Text = config.AllowMulti and "Select items..." or (config.Selected[1] or "...")
@@ -983,6 +982,11 @@ Twen:Create(UIStroke,TweenInfo.new(0.3),{
 Transparency = 0.9;
 }):Play()
 
+-- Destroy existing search frame if it exists
+if DropdownFrame:FindFirstChild("SearchFrame") then
+    DropdownFrame.SearchFrame:Destroy()
+end
+
 for i,v in pairs(ScrollingFrame:GetChildren()) do
     if v ~= Block then
         if v:IsA('Frame') then
@@ -998,10 +1002,10 @@ end
 
 local optionButtons = {}
 local searchBox = nil
-local searchFrame = nil
 
 if config.SearchEnabled then
-    searchFrame = Instance.new("Frame")
+    -- Create search frame below ValueId
+    local searchFrame = Instance.new("Frame")
     searchFrame.Name = "SearchFrame"
     searchFrame.Parent = DropdownFrame
     searchFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
@@ -1009,39 +1013,40 @@ if config.SearchEnabled then
     searchFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
     searchFrame.BorderSizePixel = 0
     searchFrame.Size = UDim2.new(0.94, 0, 0, 25)
-    searchFrame.Position = UDim2.new(0.03, 0, 0.02, 0)
+    searchFrame.Position = UDim2.new(0.03, 0, 0.12, 0)
     searchFrame.ZIndex = 103
     
     local searchCorner = Instance.new("UICorner")
     searchCorner.CornerRadius = UDim.new(0, 3)
     searchCorner.Parent = searchFrame
     
+    -- Magnifying glass icon
     local searchIcon = Instance.new("ImageLabel")
     searchIcon.Name = "SearchIcon"
     searchIcon.Parent = searchFrame
     searchIcon.BackgroundTransparency = 1.000
     searchIcon.Size = UDim2.new(0, 16, 0, 16)
-    searchIcon.Position = UDim2.new(0, 5, 0.5, -8)
+    searchIcon.Position = UDim2.new(0, 8, 0.5, -8)
     searchIcon.ZIndex = 104
-    searchIcon.Image = "rbxassetid://7072725342"
+    searchIcon.Image = "rbxassetid://6031280882" -- Magnifying glass icon
     searchIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
-    searchIcon.ImageTransparency = 0.500
+    searchIcon.ImageTransparency = 0.300
     
     searchBox = Instance.new("TextBox")
     searchBox.Name = "SearchBox"
     searchBox.Parent = searchFrame
     searchBox.BackgroundTransparency = 1.000
     searchBox.BorderSizePixel = 0
-    searchBox.Size = UDim2.new(1, -30, 1, 0)
-    searchBox.Position = UDim2.new(0, 25, 0, 0)
+    searchBox.Size = UDim2.new(1, -35, 1, 0)
+    searchBox.Position = UDim2.new(0, 30, 0, 0)
     searchBox.ZIndex = 104
     searchBox.Font = Enum.Font.GothamBold
     searchBox.PlaceholderText = "Search..."
-    searchBox.PlaceholderColor3 = Color3.fromRGB(200, 200, 200)
+    searchBox.PlaceholderColor3 = Color3.fromRGB(180, 180, 180)
     searchBox.Text = ""
     searchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
     searchBox.TextSize = 12.000
-    searchBox.TextTransparency = 0.250
+    searchBox.TextTransparency = 0.200
     searchBox.TextXAlignment = Enum.TextXAlignment.Left
     searchBox.ClearTextOnFocus = false
     
@@ -1051,12 +1056,127 @@ if config.SearchEnabled then
     searchStroke.Parent = searchFrame
     
     -- Adjust ScrollingFrame position when search is enabled
-    ScrollingFrame.Position = UDim2.new(0.5, 0, 0.155985212, 0)
-    ScrollingFrame.Size = UDim2.new(0.949999988, 0, 0.788029099, 0)
+    ScrollingFrame.Position = UDim2.new(0.5, 0, 0.22, 0)
+    ScrollingFrame.Size = UDim2.new(0.949999988, 0, 0.72, 0)
 else
-    ScrollingFrame.Position = UDim2.new(0.5, 0, 0.055985212, 0)
-    ScrollingFrame.Size = UDim2.new(0.949999988, 0, 0.888029099, 0)
+    ScrollingFrame.Position = UDim2.new(0.5, 0, 0.12, 0)
+    ScrollingFrame.Size = UDim2.new(0.949999988, 0, 0.82, 0)
 end
+
+local function createOptions(filterText)
+    for i,v in pairs(ScrollingFrame:GetChildren()) do
+        if v ~= Block then
+            if v:IsA('Frame') then
+                v:Destroy();
+            end;
+        end;
+    end
+    
+    optionButtons = {}
+    
+    local filteredData = {}
+    if config.SearchEnabled and searchBox and filterText ~= "" then
+        local lowerFilter = filterText:lower()
+        for _, item in ipairs(config.Data) do
+            if tostring(item):lower():find(lowerFilter, 1, true) then
+                table.insert(filteredData, item)
+            end
+        end
+    else
+        filteredData = config.Data
+    end
+    
+    for i, optionName in ipairs(filteredData) do
+        local isSelected = false
+        
+        if config.AllowMulti then
+            isSelected = selectedLookup[optionName] == true
+        else
+            isSelected = config.Selected[1] == optionName
+        end
+        
+        local butt = GetSelector(tostring(optionName), isSelected);
+        
+        optionButtons[optionName] = butt.effect
+        
+        if config.OnOptionCreated then
+            config.OnOptionCreated(optionName, function(state)
+                butt.effect(state)
+            end)
+        end
+        
+        butt.button.MouseButton1Click:Connect(function()
+            if config.AllowMulti then
+                local currentState = not selectedLookup[optionName]
+                butt.effect(currentState)
+                
+                if config.OnOptionSelected then
+                    config.OnOptionSelected(optionName, currentState)
+                end
+                
+                if currentState then
+                    selectedLookup[optionName] = true
+                else
+                    selectedLookup[optionName] = nil
+                end
+                
+                if not config.AllowNone then
+                    local hasAnySelected = false
+                    for _, val in ipairs(config.Data) do
+                        if selectedLookup[val] then
+                            hasAnySelected = true
+                            break
+                        end
+                    end
+                    
+                    if not hasAnySelected then
+                        selectedLookup[optionName] = true
+                        butt.effect(true)
+                        if config.OnOptionSelected then
+                            config.OnOptionSelected(optionName, true)
+                        end
+                    end
+                end
+            else
+                if optionName == config.Selected[1] and config.AllowNone then
+                    for name, effectFunc in pairs(optionButtons) do
+                        effectFunc(false)
+                    end
+                    if config.OnOptionSelected then
+                        config.OnOptionSelected(optionName, false)
+                    end
+                elseif optionName ~= config.Selected[1] then
+                    for name, effectFunc in pairs(optionButtons) do
+                        effectFunc(name == optionName)
+                    end
+                    if config.OnOptionSelected then
+                        config.OnOptionSelected(optionName, true)
+                    end
+                end
+            end
+        end)
+    end
+end
+
+createOptions("")
+
+if config.SearchEnabled and searchBox then
+    searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+        createOptions(searchBox.Text)
+    end)
+end
+
+-- Update dropdown size to accommodate search box
+if config.SearchEnabled then
+    Twen:Create(DropdownFrame,TweenInfo.new(0.15),{
+        Size = UDim2.new(0, DropdownFrame.Size.X.Offset, 0, 200)
+    }):Play()
+else
+    Twen:Create(DropdownFrame,TweenInfo.new(0.15),{
+        Size = UDim2.new(0, DropdownFrame.Size.X.Offset, 0, 150)
+    }):Play()
+end
+end;
 
 local function createOptions(filterText)
     for i,v in pairs(ScrollingFrame:GetChildren()) do
