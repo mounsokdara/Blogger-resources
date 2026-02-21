@@ -965,7 +965,6 @@ end,
 end;
 
 function WindowTable.Dropdown:OpenMulti(config)
--- config = { Data, Selected, AllowMulti, AllowNone, OnOptionCreated, OnOptionSelected }
 Looped = true;
 ValueId.Text = config.AllowMulti and "Select items..." or (config.Selected[1] or "...")
 Twen:Create(DropdownFrame,TweenInfo.new(0.3),{
@@ -995,13 +994,11 @@ for i,v in pairs(ScrollingFrame:GetChildren()) do
     end;
 end;
 
--- Create a lookup for selected values
 local selectedLookup = {}
 for _, val in ipairs(config.Selected) do
     selectedLookup[val] = true
 end
 
--- Create all options
 local optionButtons = {}
 
 for i, optionName in ipairs(config.Data) do
@@ -1015,10 +1012,8 @@ for i, optionName in ipairs(config.Data) do
     
     local butt = GetSelector(tostring(optionName), isSelected);
     
-    -- Store the effect function
     optionButtons[optionName] = butt.effect
     
-    -- Callback for option creation
     if config.OnOptionCreated then
         config.OnOptionCreated(optionName, function(state)
             butt.effect(state)
@@ -1026,28 +1021,20 @@ for i, optionName in ipairs(config.Data) do
     end
     
     butt.button.MouseButton1Click:Connect(function()
-        local currentState = false
-        
         if config.AllowMulti then
-            -- Toggle current state
-            currentState = not selectedLookup[optionName]
+            local newState = not selectedLookup[optionName]
+            butt.effect(newState)
             
-            -- Update visual
-            butt.effect(currentState)
-            
-            -- Call the selection handler
             if config.OnOptionSelected then
-                config.OnOptionSelected(optionName, currentState)
+                config.OnOptionSelected(optionName, newState)
             end
             
-            -- Update lookup
-            if currentState then
+            if newState then
                 selectedLookup[optionName] = true
             else
                 selectedLookup[optionName] = nil
             end
             
-            -- If AllowNone is false and nothing is selected, reselect this option
             if not config.AllowNone then
                 local hasAnySelected = false
                 for _, val in ipairs(config.Data) do
@@ -1058,7 +1045,6 @@ for i, optionName in ipairs(config.Data) do
                 end
                 
                 if not hasAnySelected then
-                    -- Reselect this option
                     selectedLookup[optionName] = true
                     butt.effect(true)
                     if config.OnOptionSelected then
@@ -1067,25 +1053,15 @@ for i, optionName in ipairs(config.Data) do
                 end
             end
         else
-            -- Single select - deselect all others first
-            for name, effectFunc in pairs(optionButtons) do
-                if name ~= optionName then
-                    effectFunc(false)
+            local newState = not isSelected
+            if newState or config.AllowNone then
+                for name, effectFunc in pairs(optionButtons) do
+                    effectFunc(name == optionName and newState)
                 end
-            end
-            
-            -- Toggle current (if AllowNone)
-            if config.AllowNone then
-                currentState = not isSelected
-                butt.effect(currentState)
-            else
-                currentState = true
-                butt.effect(true)
-            end
-            
-            -- Call the selection handler
-            if config.OnOptionSelected then
-                config.OnOptionSelected(optionName, currentState)
+                
+                if config.OnOptionSelected then
+                    config.OnOptionSelected(optionName, newState)
+                end
             end
         end
     end)
@@ -3405,13 +3381,12 @@ Title = "Dropdown",
 Name = drop.Title,
 Data = {'One','Two','Three','Four'},
 Default = 'Two',
-AllowMulti = false,  -- Enable multi-select
-AllowNone = false,    -- Allow selecting nothing (unselect all)
+AllowMulti = false,
+AllowNone = false,
 Callback = function(a)
 end,
 });
 
--- Convert single value to table for multi-select
 local selectedValues = {}
 local selectedLookup = {}
 
@@ -3436,7 +3411,6 @@ else
     end
 end
 
--- Filter out invalid values
 local validData = {}
 for _, v in ipairs(drop.Data) do
     validData[v] = true
@@ -3584,7 +3558,6 @@ Button.TextColor3 = Color3.fromRGB(0, 0, 0)
 Button.TextSize = 14.000
 Button.TextTransparency = 1.000
 
--- Update display text
 local function updateDisplay()
     if drop.AllowMulti then
         if #selectedValues == 0 then
@@ -3602,20 +3575,16 @@ local function updateDisplay()
 end
 updateDisplay()
 
--- Store option buttons
 local optionButtons = {}
 
--- Handle selection changes
 local function handleSelection(optionName, isSelected)
     if drop.AllowMulti then
         if isSelected then
-            -- Add to selection
             if not table.find(selectedValues, optionName) then
                 table.insert(selectedValues, optionName)
                 selectedLookup[optionName] = true
             end
         else
-            -- Remove from selection
             local index = table.find(selectedValues, optionName)
             if index then
                 table.remove(selectedValues, index)
@@ -3623,32 +3592,31 @@ local function handleSelection(optionName, isSelected)
             end
         end
         
-        -- If AllowNone is false and nothing is selected, keep this option selected
         if not drop.AllowNone and #selectedValues == 0 then
             table.insert(selectedValues, optionName)
             selectedLookup[optionName] = true
-            isSelected = true
-            -- Update button state
-            if optionButtons[optionName] and optionButtons[optionName].effect then
-                optionButtons[optionName].effect(true)
+            if optionButtons[optionName] then
+                optionButtons[optionName](true)
             end
         end
         
         updateDisplay()
         drop.Callback(selectedValues)
     else
-        -- Single select mode
         if isSelected then
-            selectedValues = {optionName}
-            selectedLookup = {[optionName] = true}
-        elseif drop.AllowNone then
-            selectedValues = {}
-            selectedLookup = {}
-        else
-            -- Can't deselect last item
-            selectedValues = {optionName}
-            selectedLookup = {[optionName] = true}
-            isSelected = true
+            if #selectedValues > 0 and selectedValues[1] == optionName and drop.AllowNone then
+                selectedValues = {}
+                selectedLookup = {}
+                if optionButtons[optionName] then
+                    optionButtons[optionName](false)
+                end
+            else
+                for name, func in pairs(optionButtons) do
+                    func(name == optionName)
+                end
+                selectedValues = {optionName}
+                selectedLookup = {[optionName] = true}
+            end
         end
         
         updateDisplay()
@@ -3663,22 +3631,15 @@ end
 Button.MouseButton1Click:Connect(function()
     WindowTable.Dropdown:Setup(MFrame)
     
-    -- Clear existing option buttons
     optionButtons = {}
     
-    -- Create the dropdown
     WindowTable.Dropdown:OpenMulti({
         Data = drop.Data,
         Selected = selectedValues,
         AllowMulti = drop.AllowMulti,
         AllowNone = drop.AllowNone,
         OnOptionCreated = function(optionName, setSelectedFunc)
-            -- Store the effect function
-            optionButtons[optionName] = {
-                effect = setSelectedFunc
-            }
-            
-            -- Set initial state
+            optionButtons[optionName] = setSelectedFunc
             if drop.AllowMulti then
                 setSelectedFunc(selectedLookup[optionName] == true)
             else
@@ -3687,19 +3648,6 @@ Button.MouseButton1Click:Connect(function()
         end,
         OnOptionSelected = function(optionName, isSelected)
             handleSelection(optionName, isSelected)
-            
-            -- Update all button states
-            if drop.AllowMulti then
-                -- Update the clicked button
-                if optionButtons[optionName] then
-                    optionButtons[optionName].effect(isSelected)
-                end
-            else
-                -- Update all buttons for single select
-                for name, data in pairs(optionButtons) do
-                    data.effect(name == optionName and isSelected)
-                end
-            end
         end
     })
 end)
@@ -3745,7 +3693,6 @@ end,
 Refresh = function(newData)
     if newData then 
         drop.Data = newData
-        -- Filter selected values
         if drop.AllowMulti then
             local filtered = {}
             for _, v in ipairs(selectedValues) do
@@ -3781,7 +3728,6 @@ Clear = function()
 end,
 SetOptions = function(table)
     drop.Data = table
-    -- Update selected values
     if drop.AllowMulti then
         local filtered = {}
         for _, v in ipairs(selectedValues) do
