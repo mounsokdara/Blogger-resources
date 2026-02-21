@@ -1034,8 +1034,8 @@ if config.SearchEnabled then
     
     -- Adjust ValueId and ScrollingFrame positions
     ValueId.Position = UDim2.new(0.5, 0, 0, 40)
-    ScrollingFrame.Position = UDim2.new(0.5, 0, 0, 40)
-    ScrollingFrame.Size = UDim2.new(0.92, 0, 0.8, -50)
+    ScrollingFrame.Position = UDim2.new(0.5, 0, 0, 100)
+    ScrollingFrame.Size = UDim2.new(0.92, 0, 0.8, -70)
 else
     ValueId.Position = UDim2.new(0.5, 0, 0, 0)
     ScrollingFrame.Position = UDim2.new(0.5, 0, 0.555985212, 0)
