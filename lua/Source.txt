@@ -1053,46 +1053,24 @@ for i, optionName in ipairs(config.Data) do
                 end
             end
         else
-            local isCurrentlySelected = (config.Selected[1] == optionName)
-            local newState = not isCurrentlySelected
-            
-            if newState or config.AllowNone then
+            if optionName == config.Selected[1] and config.AllowNone then
                 for name, effectFunc in pairs(optionButtons) do
-                    effectFunc(name == optionName and newState)
+                    effectFunc(false)
                 end
-                
                 if config.OnOptionSelected then
-                    config.OnOptionSelected(optionName, newState)
+                    config.OnOptionSelected(optionName, false)
+                end
+            elseif optionName ~= config.Selected[1] then
+                for name, effectFunc in pairs(optionButtons) do
+                    effectFunc(name == optionName)
+                end
+                if config.OnOptionSelected then
+                    config.OnOptionSelected(optionName, true)
                 end
             end
         end
     end)
 end
-
--- Add click outside to close
-local function onInputBegan(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        local pos = Vector2.new(input.Position.X, input.Position.Y)
-        local dropdownPos = DropdownFrame.AbsolutePosition
-        local dropdownSize = DropdownFrame.AbsoluteSize
-        
-        if pos.X < dropdownPos.X or pos.X > dropdownPos.X + dropdownSize.X or
-           pos.Y < dropdownPos.Y or pos.Y > dropdownPos.Y + dropdownSize.Y then
-            WindowTable.Dropdown:Close()
-        end
-    end
-end
-
-local connection
-connection = Input.InputBegan:Connect(function(input)
-    if Looped then
-        onInputBegan(input)
-    else
-        if connection then
-            connection:Disconnect()
-        end
-    end
-end)
 end;
 
 local MouseInFrame = false;
@@ -3630,33 +3608,28 @@ local function handleSelection(optionName, isSelected)
         updateDisplay()
         drop.Callback(selectedValues)
     else
-        if isSelected then
-            if #selectedValues > 0 and selectedValues[1] == optionName and drop.AllowNone then
-                selectedValues = {}
-                selectedLookup = {}
-                if optionButtons[optionName] then
-                    optionButtons[optionName](false)
-                end
-            elseif #selectedValues == 0 or selectedValues[1] ~= optionName then
-                if #selectedValues > 0 then
-                    local oldValue = selectedValues[1]
-                    if optionButtons[oldValue] then
-                        optionButtons[oldValue](false)
-                    end
-                end
-                selectedValues = {optionName}
-                selectedLookup = {[optionName] = true}
-                if optionButtons[optionName] then
-                    optionButtons[optionName](true)
+        if optionName == selectedValues[1] and drop.AllowNone then
+            selectedValues = {}
+            selectedLookup = {}
+            if optionButtons[optionName] then
+                optionButtons[optionName](false)
+            end
+            updateDisplay()
+            drop.Callback(nil)
+        elseif optionName ~= selectedValues[1] then
+            if #selectedValues > 0 then
+                local oldValue = selectedValues[1]
+                if optionButtons[oldValue] then
+                    optionButtons[oldValue](false)
                 end
             end
-        end
-        
-        updateDisplay()
-        if #selectedValues == 0 then
-            drop.Callback(nil)
-        else
-            drop.Callback(selectedValues[1])
+            selectedValues = {optionName}
+            selectedLookup = {[optionName] = true}
+            if optionButtons[optionName] then
+                optionButtons[optionName](true)
+            end
+            updateDisplay()
+            drop.Callback(optionName)
         end
     end
 end
