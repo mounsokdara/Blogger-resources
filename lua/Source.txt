@@ -1011,6 +1011,7 @@ for i, optionName in ipairs(config.Data) do
     end
     
     local butt = GetSelector(tostring(optionName), isSelected);
+    
     optionButtons[optionName] = butt.effect
     
     if config.OnOptionCreated then
@@ -1052,18 +1053,16 @@ for i, optionName in ipairs(config.Data) do
                 end
             end
         else
-            local currentState = not isSelected
+            local currentState = not (config.Selected[1] == optionName)
             
-            if not config.AllowNone and not currentState then
-                return
-            end
-            
-            for name, effectFunc in pairs(optionButtons) do
-                effectFunc(name == optionName and currentState)
-            end
-            
-            if config.OnOptionSelected then
-                config.OnOptionSelected(optionName, currentState)
+            if currentState or config.AllowNone then
+                for name, effectFunc in pairs(optionButtons) do
+                    effectFunc(name == optionName and currentState)
+                end
+                
+                if config.OnOptionSelected then
+                    config.OnOptionSelected(optionName, currentState)
+                end
             end
         end
     end)
@@ -3606,27 +3605,25 @@ local function handleSelection(optionName, isSelected)
         drop.Callback(selectedValues)
     else
         if isSelected then
-            for name, func in pairs(optionButtons) do
-                func(name == optionName)
+            if #selectedValues > 0 and selectedValues[1] == optionName and drop.AllowNone then
+                selectedValues = {}
+                selectedLookup = {}
+                if optionButtons[optionName] then
+                    optionButtons[optionName](false)
+                end
+            elseif #selectedValues == 0 or selectedValues[1] ~= optionName then
+                if #selectedValues > 0 then
+                    local oldValue = selectedValues[1]
+                    if optionButtons[oldValue] then
+                        optionButtons[oldValue](false)
+                    end
+                end
+                selectedValues = {optionName}
+                selectedLookup = {[optionName] = true}
+                if optionButtons[optionName] then
+                    optionButtons[optionName](true)
+                end
             end
-            selectedValues = {optionName}
-            selectedLookup = {[optionName] = true}
-        elseif drop.AllowNone then
-            for _, func in pairs(optionButtons) do
-                func(false)
-            end
-            selectedValues = {}
-            selectedLookup = {}
-        else
-            for _, func in pairs(optionButtons) do
-                func(false)
-            end
-            if optionButtons[optionName] then
-                optionButtons[optionName](true)
-            end
-            selectedValues = {optionName}
-            selectedLookup = {[optionName] = true}
-            isSelected = true
         end
         
         updateDisplay()
@@ -3640,6 +3637,7 @@ end
 
 Button.MouseButton1Click:Connect(function()
     WindowTable.Dropdown:Setup(MFrame)
+    
     optionButtons = {}
     
     WindowTable.Dropdown:OpenMulti({
