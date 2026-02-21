@@ -377,23 +377,6 @@ ConfigFolder = "SugarConfigs"
 local TweenInfo1 = TweenInfo.new(0.5,Enum.EasingStyle.Quint,Enum.EasingDirection.InOut);
 local TweenInfo2 = TweenInfo.new(0.3,Enum.EasingStyle.Quint,Enum.EasingDirection.InOut);
 local WindowTable = {};
-local Drag = {
-	Dragging = false,
-	Frame = nil,
-	FramePosition = nil,
-	StartPosition = nil,
-	ChangedConnection = nil,
-}
-
-local Helper = {
-	IsClickInput = function(Input)
-		return Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch
-	end,
-	
-	IsMoveInput = function(Input)
-		return Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch
-	end
-}
 local ScreenGui = Instance.new("ScreenGui")
 local MainFrame = Instance.new("Frame")
 local UICorner = Instance.new("UICorner")
@@ -490,50 +473,6 @@ if isMobile then
 ImageButton.Size = UDim2.new(0.12, 0, 0.12, 0)
 end
 local function Update()
-MainFrame.InputBegan:Connect(function(Input)
-	if not Helper.IsClickInput(Input) then return end
-	if Input.UserInputState ~= Enum.UserInputState.Begin then return end
-	
-	Drag.Dragging = true
-	Drag.Frame = MainFrame
-	Drag.FramePosition = MainFrame.Position
-	Drag.StartPosition = Input.Position
-	
-	Drag.ChangedConnection = Input.Changed:Connect(function()
-		if Input.UserInputState == Enum.UserInputState.End then
-			Drag.Dragging = false
-			Drag.Frame = nil
-			
-			if Drag.ChangedConnection then
-				Drag.ChangedConnection:Disconnect()
-				Drag.ChangedConnection = nil
-			end
-		end
-	end)
-end)
-
-local UserInputService = game:GetService("UserInputService")
-UserInputService.InputChanged:Connect(function(Input)
-	if not Drag.Dragging then return end
-	if not Helper.IsMoveInput(Input) then return end
-	if Input.UserInputState ~= Enum.UserInputState.Change then return end
-	
-	local Delta = Input.Position - Drag.StartPosition
-	local FramePosition = Drag.FramePosition
-	
-	if wax and wax.shared and wax.shared.GetDPIScale then
-		Delta = Delta / wax.shared.GetDPIScale()
-	end
-	
-	MainFrame.Position = UDim2.new(
-		FramePosition.X.Scale,
-		FramePosition.X.Offset + Delta.X,
-		FramePosition.Y.Scale,
-		FramePosition.Y.Offset + Delta.Y
-	)
-	
-	WindowTable.LastPosition = MainFrame.Position
-end)
 if WindowTable.WindowToggle then
 Twen:Create(MainFrame,TweenInfo.new(0.7,Enum.EasingStyle.Quint),{BackgroundTransparency = 0.4,Size = config.Size}):Play();
 Twen:Create(MainDropShadow,TweenInfo1,{ImageTransparency = 0.6}):Play();
@@ -4131,67 +4070,88 @@ return SectionTable;
 end;
 return TabTable;
 end;
-local dragToggle = nil;
-local dragSpeed = 0.1;
-local dragStart = nil;
-local startPos = nil;
-local function updateInput(input)
-WindowTable.ElBlurUI.Update()
-local delta = input.Position - dragStart;
-local position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
-startPos.Y.Scale, startPos.Y.Offset + delta.Y);
-game:GetService('TweenService'):Create(MainFrame, TweenInfo.new(dragSpeed), {Position = position}):Play()
-if not WindowTable.WindowToggle then
-WindowTable.LastPosition = position 
+local UIHelper = {}
+
+function UIHelper.IsMouseOverFrame(Frame: GuiObject, Position: Vector3): boolean
+	local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize
+	return Position.X >= AbsPos.X
+		and Position.X <= AbsPos.X + AbsSize.X
+		and Position.Y >= AbsPos.Y
+		and Position.Y <= AbsPos.Y + AbsSize.Y
 end
-end;
-InputFrame.InputBegan:Connect(function(input)
-if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
-dragToggle = true
-dragStart = input.Position
-startPos = MainFrame.Position
-input.Changed:Connect(function()
-if input.UserInputState == Enum.UserInputState.End then
-dragToggle = false;
-end;
-end)
-end;
-end)
-Input.InputChanged:Connect(function(input)
-if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-if dragToggle then
-updateInput(input);
-end;
-end;
-end)
-WindowTable.SetKeybind = function(newKey)
-    WindowTable.Keybind = newKey
+
+function UIHelper.IsClickInput(Input: InputObject): boolean
+	return Input.UserInputState == Enum.UserInputState.Begin
+		and (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch)
 end
-return WindowTable;
-end;
-Library.NewAuth = function(conf)
-conf = Config(conf,{
-Title = "Sugar $ KEY SYSTEM",
-GetKey = function() return 'https://example.com' end,
-Auth = function(key) if key == '1 or 1' then return key; end; end,
-Freeze = false,
-});
-if conf.Auth then
-if debug.info(conf.Auth,'s') == '[C]' then
-if error then
-error('huh');
-end;
-return;
+
+function UIHelper.IsMoveInput(Input: InputObject): boolean
+	return Input.UserInputState == Enum.UserInputState.Change
+		and (Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch)
 end
-end;
-if conf.GetKey then
-if debug.info(conf.GetKey,'s') == '[C]' then
-if error then
-error('huh');
-end;
-return;
+
+function UIHelper.MakeDraggable(WindowTable, MainFrame, DragFrame)
+	if not WindowTable or not MainFrame or not DragFrame then
+		return WindowTable
+	end
+	
+	local dragging = false
+	local dragStart = nil
+	local startPos = nil
+	local UserInputService = game:GetService("UserInputService")
+	
+	local function updatePosition(input)
+		if not dragging then return end
+		
+		local delta = input.Position - dragStart
+		MainFrame.Position = UDim2.new(
+			startPos.X.Scale, 
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale, 
+			startPos.Y.Offset + delta.Y
+		)
+		
+		if WindowTable and not WindowTable.WindowToggle then
+			WindowTable.LastPosition = MainFrame.Position
+		end
+		
+		if WindowTable and WindowTable.ElBlurUI and WindowTable.ElBlurUI.Update then
+			WindowTable.ElBlurUI.Update()
+		end
+	end
+	
+	DragFrame.InputBegan:Connect(function(input)
+		if UIHelper.IsClickInput(input) then
+			if UIHelper.IsMouseOverFrame(DragFrame, input.Position) then
+				dragging = true
+				dragStart = input.Position
+				startPos = MainFrame.Position
+				
+				input.Changed:Connect(function()
+					if input.UserInputState == Enum.UserInputState.End then
+						dragging = false
+					end
+				end)
+			end
+		end
+	end)
+	
+	DragFrame.InputChanged:Connect(function(input)
+		if UIHelper.IsMoveInput(input) and dragging then
+			updatePosition(input)
+		end
+	end)
+	
+	UserInputService.InputChanged:Connect(function(input)
+		if UIHelper.IsMoveInput(input) and dragging then
+			updatePosition(input)
+		end
+	end)
+	
+	return WindowTable
 end
-end;
+
+return UIHelper
 local ScreenGui = Instance.new("ScreenGui")
 local vaid = Instance.new('BindableEvent')
 local Auth = Instance.new("Frame")
