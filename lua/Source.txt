@@ -3388,6 +3388,7 @@ Data = {'One','Two','Three','Four'},
 Default = 'Two',
 AllowMulti = false,
 AllowNone = false,
+SearchEnabled = false,
 Callback = function(a)
 end,
 });
@@ -3644,6 +3645,7 @@ Button.MouseButton1Click:Connect(function()
         Selected = selectedValues,
         AllowMulti = drop.AllowMulti,
         AllowNone = drop.AllowNone,
+        SearchEnabled = drop.SearchEnabled,
         OnOptionCreated = function(optionName, setSelectedFunc)
             optionButtons[optionName] = setSelectedFunc
             if drop.AllowMulti then
@@ -3778,6 +3780,10 @@ GetSelected = function()
     return selectedValues
 end
 };
+
+table.insert(SectionTable.Elements, el)
+return el;
+end;
 
 table.insert(SectionTable.Elements, el)
 return el;
