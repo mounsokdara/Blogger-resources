@@ -3,82 +3,6 @@ local Input = game:GetService('UserInputService');
 local TextServ = game:GetService('TextService');
 local LocalPlayer = game:GetService('Players').LocalPlayer;
 local CoreGui = (gethui and gethui()) or game:FindFirstChild('CoreGui') or LocalPlayer.PlayerGui;
-local Drag = {
-	Dragging = false,
-	Frame = nil,
-	FramePosition = nil,
-	FrameSize = nil,
-	StartPosition = nil,
-	ChangedConnection = nil,
-	Callback = nil,
-}
-
--- Simple helper functions (replace with your actual Helper module)
-local Helper = {
-	IsClickInput = function(Input)
-		return Input.UserInputType == Enum.UserInputType.MouseButton1 or 
-			   Input.UserInputType == Enum.UserInputType.Touch
-	end,
-	IsMoveInput = function(Input)
-		return Input.UserInputType == Enum.UserInputType.MouseMovement or 
-			   Input.UserInputType == Enum.UserInputType.Touch
-	end
-}
-
-local function DefaultCallback(_, Input: InputObject)
-	local Delta = Input.Position - Drag.StartPosition
-	local FramePosition: UDim2 = Drag.FramePosition
-
-	if wax and wax.shared and wax.shared.GetDPIScale then
-		Delta = Delta / wax.shared.GetDPIScale()
-	end
-
-	Drag.Frame.Position = UDim2.new(
-		FramePosition.X.Scale,
-		FramePosition.X.Offset + Delta.X,
-		FramePosition.Y.Scale,
-		FramePosition.Y.Offset + Delta.Y
-	)
-end
-
-function Drag.Setup(Frame: GuiObject, DragFrame: GuiObject, Callback: (Info: {}, Input: InputObject) -> () | nil)
-	Callback = Callback or DefaultCallback
-
-	DragFrame.InputBegan:Connect(function(Input: InputObject)
-		if not Helper.IsClickInput(Input) then
-			return
-		end
-
-		Drag.Dragging = true
-		Drag.Frame = Frame
-		Drag.FramePosition = Frame.Position
-		Drag.StartPosition = Input.Position
-		Drag.FrameSize = Frame.Size
-		Drag.Callback = Callback
-
-		Drag.ChangedConnection = Input.Changed:Connect(function()
-			if Input.UserInputState ~= Enum.UserInputState.End then
-				return
-			end
-
-			Drag.Dragging = false
-			Drag.Frame = nil
-			Drag.Callback = nil
-
-			if Drag.ChangedConnection and Drag.ChangedConnection.Connected then
-				Drag.ChangedConnection:Disconnect()
-				Drag.ChangedConnection = nil
-			end
-		end)
-	end)
-end
-
--- Connect to input changed
-Input.InputChanged:Connect(function(Input: InputObject)
-	if Drag.Dragging and Drag.Callback and Helper.IsMoveInput(Input) then
-		Drag.Callback(Drag, Input)
-	end
-end)
 local Icons = (function()
     local IconModule = {
         IconsType = "lucide",
@@ -1090,7 +1014,7 @@ if config.SearchEnabled then
     SearchStroke.Parent = SearchBox
     ValueId.Position = UDim2.new(0.5, 0, 0, 40)
     ScrollingFrame.Position = UDim2.new(0.5, 0, 0, 100)
-    ScrollingFrame.Size = UDim2.new(0.92, 0, 0.67, -70)
+    ScrollingFrame.Size = UDim2.new(0.92, 0, 0.67, 0)
 else
     ValueId.Position = UDim2.new(0.5, 0, 0, 0)
     ScrollingFrame.Position = UDim2.new(0.5, 0, 0.555985212, 0)
@@ -4146,33 +4070,39 @@ return SectionTable;
 end;
 return TabTable;
 end;
-
-
-local function CustomDragCallback(DragInfo, Input)
-	local Delta = Input.Position - DragInfo.StartPosition
-	local FramePosition = DragInfo.FramePosition
-	
-	local newPosition = UDim2.new(
-		FramePosition.X.Scale,
-		FramePosition.X.Offset + Delta.X,
-		FramePosition.Y.Scale,
-		FramePosition.Y.Offset + Delta.Y
-	)
-	
-	Twen:Create(MainFrame, TweenInfo.new(0.1), {
-		Position = newPosition
-	}):Play()
-	
-	WindowTable.ElBlurUI.Update()
-	
-	if not WindowTable.WindowToggle then
-		WindowTable.LastPosition = newPosition
-	end
+local dragToggle = nil;
+local dragSpeed = 0.1;
+local dragStart = nil;
+local startPos = nil;
+local function updateInput(input)
+WindowTable.ElBlurUI.Update()
+local delta = input.Position - dragStart;
+local position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
+startPos.Y.Scale, startPos.Y.Offset + delta.Y);
+game:GetService('TweenService'):Create(MainFrame, TweenInfo.new(dragSpeed), {Position = position}):Play()
+if not WindowTable.WindowToggle then
+WindowTable.LastPosition = position 
 end
-
-Drag.Setup(MainFrame, InputFrame, CustomDragCallback)
-
-
+end;
+InputFrame.InputBegan:Connect(function(input)
+if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+dragToggle = true
+dragStart = input.Position
+startPos = MainFrame.Position
+input.Changed:Connect(function()
+if input.UserInputState == Enum.UserInputState.End then
+dragToggle = false;
+end;
+end)
+end;
+end)
+Input.InputChanged:Connect(function(input)
+if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+if dragToggle then
+updateInput(input);
+end;
+end;
+end)
 WindowTable.SetKeybind = function(newKey)
     WindowTable.Keybind = newKey
 end
