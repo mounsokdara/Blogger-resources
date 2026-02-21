@@ -1000,27 +1000,12 @@ for _, val in ipairs(config.Selected) do
     selectedLookup[val] = true
 end
 
--- Build options list with None if allowed
-local options = {}
-if config.AllowNone then
-    table.insert(options, "None")
-end
-for _, v in ipairs(config.Data) do
-    table.insert(options, v)
-end
-
 -- Store all option buttons for state management
 local optionButtons = {}
 
 -- Create each option
-for i, optionName in ipairs(options) do
-    local isSelected = false
-    
-    if optionName == "None" then
-        isSelected = (#config.Selected == 0)
-    else
-        isSelected = selectedLookup[optionName] == true
-    end
+for i, optionName in ipairs(config.Data) do
+    local isSelected = selectedLookup[optionName] == true
     
     local butt = GetSelector(tostring(optionName), isSelected);
     
@@ -1041,61 +1026,54 @@ for i, optionName in ipairs(options) do
     
     butt.button.MouseButton1Click:Connect(function()
         if config.AllowMulti then
-            if optionName == "None" and config.AllowNone then
-                -- Deselect all other options
-                for name, data in pairs(optionButtons) do
-                    if name ~= "None" then
-                        data.effect(false)
-                    end
-                end
-                -- Select None
-                optionButtons["None"].effect(true)
-                -- Callback with empty table
-                config.Callback("None", true)
+            -- Toggle current option
+            local newState = not selectedLookup[optionName]
+            optionButtons[optionName].effect(newState)
+            
+            -- Update selectedLookup
+            if newState then
+                selectedLookup[optionName] = true
             else
-                -- Toggle current option
-                local newState = not selectedLookup[optionName]
-                optionButtons[optionName].effect(newState)
-                
-                -- Update selectedLookup
-                if newState then
-                    selectedLookup[optionName] = true
-                else
-                    selectedLookup[optionName] = nil
-                end
-                
-                -- If we have any selections and None exists, deselect None
-                if next(selectedLookup) and optionButtons["None"] then
-                    optionButtons["None"].effect(false)
-                end
-                
-                -- If no selections and AllowNone is false, keep at least one selected
-                if not next(selectedLookup) and not config.AllowNone and #config.Data > 0 then
-                    -- Select the first option
-                    local firstOption = config.Data[1]
-                    selectedLookup[firstOption] = true
-                    if optionButtons[firstOption] then
-                        optionButtons[firstOption].effect(true)
-                    end
-                end
-                
-                -- Callback with current selection
-                config.Callback(optionName, newState)
+                selectedLookup[optionName] = nil
             end
+            
+            -- Build current selection
+            local currentSelection = {}
+            for name, _ in pairs(selectedLookup) do
+                table.insert(currentSelection, name)
+            end
+            
+            -- Handle AllowNone: if no selections and AllowNone is false, keep at least one selected
+            if not config.AllowNone and #currentSelection == 0 and #config.Data > 0 then
+                -- Select the first option
+                local firstOption = config.Data[1]
+                selectedLookup[firstOption] = true
+                if optionButtons[firstOption] then
+                    optionButtons[firstOption].effect(true)
+                end
+                currentSelection = {firstOption}
+            end
+            
+            -- Callback with current selection
+            config.Callback(currentSelection)
+            
         else
             -- Single select mode
-            if optionName == "None" and config.AllowNone then
-                -- Deselect all
+            if config.AllowNone and selectedLookup[optionName] then
+                -- Deselect if clicking on already selected item and AllowNone is true
+                selectedLookup = {}
                 for name, data in pairs(optionButtons) do
-                    data.effect(name == "None")
+                    data.effect(false)
                 end
-                config.Callback(nil, false)
+                config.Callback(nil)
             else
                 -- Select this option, deselect others
+                selectedLookup = {}
+                selectedLookup[optionName] = true
                 for name, data in pairs(optionButtons) do
                     data.effect(name == optionName)
                 end
-                config.Callback(optionName, true)
+                config.Callback(optionName)
             end
         end
     end)
