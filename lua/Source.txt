@@ -1053,15 +1053,19 @@ for i, optionName in ipairs(config.Data) do
                 end
             end
         else
-            local currentState = not (config.Selected[1] == optionName)
-            
-            if currentState or config.AllowNone then
+            if config.Selected[1] == optionName and config.AllowNone then
                 for name, effectFunc in pairs(optionButtons) do
-                    effectFunc(name == optionName and currentState)
+                    effectFunc(false)
                 end
-                
                 if config.OnOptionSelected then
-                    config.OnOptionSelected(optionName, currentState)
+                    config.OnOptionSelected(optionName, false)
+                end
+            elseif config.Selected[1] ~= optionName then
+                for name, effectFunc in pairs(optionButtons) do
+                    effectFunc(name == optionName)
+                end
+                if config.OnOptionSelected then
+                    config.OnOptionSelected(optionName, true)
                 end
             end
         end
@@ -3605,36 +3609,30 @@ local function handleSelection(optionName, isSelected)
         drop.Callback(selectedValues)
     else
         if isSelected then
-            if #selectedValues > 0 and selectedValues[1] == optionName and drop.AllowNone then
+            if selectedValues[1] == optionName and drop.AllowNone then
                 selectedValues = {}
                 selectedLookup = {}
                 if optionButtons[optionName] then
                     optionButtons[optionName](false)
                 end
-                updateDisplay()
-                drop.Callback(nil)
-            elseif #selectedValues == 0 or selectedValues[1] ~= optionName then
-                if #selectedValues > 0 then
-                    local oldValue = selectedValues[1]
-                    if optionButtons[oldValue] then
-                        optionButtons[oldValue](false)
-                    end
+            elseif selectedValues[1] ~= optionName then
+                if selectedValues[1] and optionButtons[selectedValues[1]] then
+                    optionButtons[selectedValues[1]](false)
                 end
                 selectedValues = {optionName}
                 selectedLookup = {[optionName] = true}
                 if optionButtons[optionName] then
                     optionButtons[optionName](true)
                 end
-                updateDisplay()
-                drop.Callback(optionName)
             end
         end
-    end
-end
-
-local function closeDropdown()
-    if WindowTable.Dropdown and WindowTable.Dropdown.Close then
-        WindowTable.Dropdown:Close()
+        
+        updateDisplay()
+        if #selectedValues == 0 then
+            drop.Callback(nil)
+        else
+            drop.Callback(selectedValues[1])
+        end
     end
 end
 
@@ -3642,10 +3640,6 @@ Button.MouseButton1Click:Connect(function()
     WindowTable.Dropdown:Setup(MFrame)
     
     optionButtons = {}
-    
-    local function onOptionClick(optionName, newState)
-        handleSelection(optionName, newState)
-    end
     
     WindowTable.Dropdown:OpenMulti({
         Data = drop.Data,
@@ -3660,33 +3654,10 @@ Button.MouseButton1Click:Connect(function()
                 setSelectedFunc(selectedValues[1] == optionName)
             end
         end,
-        OnOptionSelected = onOptionClick
-    })
-end)
-
-Input.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        task.wait(0.1)
-        if WindowTable.Dropdown and WindowTable.Dropdown.Value then
-            local mousePos = Vector2.new(input.Position.X, input.Position.Y)
-            local dropdownAbsPos = DropdownFrame.AbsolutePosition
-            local dropdownAbsSize = DropdownFrame.AbsoluteSize
-            
-            if mousePos.X < dropdownAbsPos.X or mousePos.X > dropdownAbsPos.X + dropdownAbsSize.X or
-               mousePos.Y < dropdownAbsPos.Y or mousePos.Y > dropdownAbsPos.Y + dropdownAbsSize.Y then
-                if MFrame then
-                    local mframeAbsPos = MFrame.AbsolutePosition
-                    local mframeAbsSize = MFrame.AbsoluteSize
-                    if mousePos.X < mframeAbsPos.X or mousePos.X > mframeAbsPos.X + mframeAbsSize.X or
-                       mousePos.Y < mframeAbsPos.Y or mousePos.Y > mframeAbsPos.Y + mframeAbsSize.Y then
-                        closeDropdown()
-                    end
-                else
-                    closeDropdown()
-                end
-            end
+        OnOptionSelected = function(optionName, isSelected)
+            handleSelection(optionName, isSelected)
         end
-    end
+    })
 end)
 
 local el = {
@@ -3755,7 +3726,7 @@ Open = function()
     Button.MouseButton1Click:Fire()
 end,
 Close = function()
-    closeDropdown()
+    WindowTable.Dropdown:Close()
 end,
 Clear = function()
     drop.Data = {}
