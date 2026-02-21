@@ -3388,7 +3388,7 @@ Data = {'One','Two','Three','Four'},
 Default = 'Two',
 AllowMulti = false,
 AllowNone = false,
-SearchEnabled = false,
+SearchEnabled = false, -- New option
 Callback = function(a)
 end,
 });
@@ -3645,7 +3645,7 @@ Button.MouseButton1Click:Connect(function()
         Selected = selectedValues,
         AllowMulti = drop.AllowMulti,
         AllowNone = drop.AllowNone,
-        SearchEnabled = drop.SearchEnabled,
+        SearchEnabled = drop.SearchEnabled, -- Pass the search option
         OnOptionCreated = function(optionName, setSelectedFunc)
             optionButtons[optionName] = setSelectedFunc
             if drop.AllowMulti then
