@@ -963,6 +963,7 @@ Selector:Destroy()
 end,
 }
 end;
+
 function WindowTable.Dropdown:OpenMulti(config)
 -- config = { Data, Selected, Callback, AllowMulti, AllowNone, OnOptionCreated }
 Looped = true;
@@ -1003,7 +1004,7 @@ end
 -- Store all option buttons for state management
 local optionButtons = {}
 
--- Create each option
+-- Create each option (no "None" option)
 for i, optionName in ipairs(config.Data) do
     local isSelected = selectedLookup[optionName] == true
     
@@ -1037,50 +1038,38 @@ for i, optionName in ipairs(config.Data) do
                 selectedLookup[optionName] = nil
             end
             
-            -- Build current selection
-            local currentSelection = {}
-            for name, _ in pairs(selectedLookup) do
-                table.insert(currentSelection, name)
-            end
-            
-            -- Handle AllowNone: if no selections and AllowNone is false, keep at least one selected
-            if not config.AllowNone and #currentSelection == 0 and #config.Data > 0 then
+            -- If no selections and AllowNone is false, keep at least one selected
+            if not next(selectedLookup) and not config.AllowNone and #config.Data > 0 then
                 -- Select the first option
                 local firstOption = config.Data[1]
                 selectedLookup[firstOption] = true
                 if optionButtons[firstOption] then
                     optionButtons[firstOption].effect(true)
                 end
-                currentSelection = {firstOption}
-            end
-            
-            -- Callback with current selection
-            config.Callback(currentSelection)
-            
-        else
-            -- Single select mode
-            if config.AllowNone and selectedLookup[optionName] then
-                -- Deselect if clicking on already selected item and AllowNone is true
-                selectedLookup = {}
-                for name, data in pairs(optionButtons) do
-                    data.effect(false)
-                end
-                config.Callback(nil)
+                -- Callback with the forced selection
+                config.Callback(firstOption, true)
             else
-                -- Select this option, deselect others
-                selectedLookup = {}
-                selectedLookup[optionName] = true
-                for name, data in pairs(optionButtons) do
-                    data.effect(name == optionName)
-                end
-                config.Callback(optionName)
+                -- Callback with current selection state
+                config.Callback(optionName, newState)
             end
+        else
+            -- Single select mode - select this option, deselect others
+            for name, data in pairs(optionButtons) do
+                data.effect(name == optionName)
+            end
+            config.Callback(optionName, true)
         end
     end)
     
     table.insert(optionButtons, {optionName, butt})
 end
+
+-- If no items are selected and AllowNone is true, that's fine - empty selection
+if config.AllowNone and not next(selectedLookup) then
+    -- Just leave everything unselected
+end
 end;
+
 local MouseInFrame = false;
 local MouseInMyFrame = false;
 function WindowTable.Dropdown:Setup(target_frame:Frame)
@@ -3428,7 +3417,7 @@ if drop.AllowMulti then
     selectedValues = filtered
 else
     if selectedValues[1] and not validData[selectedValues[1]] then
-        selectedValues = {drop.Data[1] or "None"}
+        selectedValues = {drop.Data[1]}
     end
 end
 
@@ -3558,12 +3547,12 @@ Button.TextTransparency = 1.000
 local function updateDisplay()
     if drop.AllowMulti then
         if #selectedValues == 0 then
-            ValueText.Text = drop.AllowNone and "None" or "Select..."
+            ValueText.Text = "Select..."
         else
             ValueText.Text = table.concat(selectedValues, ", ")
         end
     else
-        ValueText.Text = selectedValues[1] or (drop.AllowNone and "None" or "Select...")
+        ValueText.Text = selectedValues[1] or "Select..."
     end
 end
 updateDisplay()
@@ -3571,51 +3560,28 @@ updateDisplay()
 -- Store the current selection state for each option
 local optionStates = {}
 
-local Updater = function(value, isMultiSelect)
+local Updater = function(value, selected)
     if drop.AllowMulti then
-        if value == "None" and drop.AllowNone then
-            -- Clear all selections
-            selectedValues = {}
-            -- Update all option states
-            for opt, state in pairs(optionStates) do
-                if opt ~= "None" then
-                    state.selected = false
-                    if state.effect then
-                        state.effect(false)
-                    end
-                end
-            end
-            if optionStates["None"] and optionStates["None"].effect then
-                optionStates["None"].effect(true)
+        if selected then
+            -- Add to selection
+            if not table.find(selectedValues, value) then
+                table.insert(selectedValues, value)
             end
         else
-            -- Toggle the selected value
+            -- Remove from selection
             local index = table.find(selectedValues, value)
             if index then
                 table.remove(selectedValues, index)
-                if optionStates[value] and optionStates[value].effect then
-                    optionStates[value].effect(false)
-                end
-            else
-                table.insert(selectedValues, value)
-                if optionStates[value] and optionStates[value].effect then
-                    optionStates[value].effect(true)
-                end
             end
-            
-            -- If we have selections and "None" is an option, deselect it
-            if #selectedValues > 0 and drop.AllowNone and optionStates["None"] then
-                selectedValues = table.filter(selectedValues, function(v) return v ~= "None" end)
-                if optionStates["None"].effect then
-                    optionStates["None"].effect(false)
-                end
-            end
-            
-            -- Handle AllowNone: if no selections and AllowNone is false, keep at least one selected
-            if not drop.AllowNone and #selectedValues == 0 and #drop.Data > 0 then
-                selectedValues = {drop.Data[1]}
-                if optionStates[drop.Data[1]] and optionStates[drop.Data[1]].effect then
-                    optionStates[drop.Data[1]].effect(true)
+        end
+        
+        -- Handle AllowNone: if no selections and AllowNone is false, keep at least one selected
+        if not drop.AllowNone and #selectedValues == 0 and #drop.Data > 0 then
+            selectedValues = {drop.Data[1]}
+            -- Update the UI for the forced selection
+            for opt, state in pairs(optionStates) do
+                if state.effect then
+                    state.effect(opt == drop.Data[1])
                 end
             end
         end
@@ -3624,23 +3590,15 @@ local Updater = function(value, isMultiSelect)
         drop.Callback(selectedValues)
     else
         -- Single select mode
-        if value == "None" and drop.AllowNone then
-            selectedValues = {}
-            drop.Callback(nil)
-        else
-            selectedValues = {value}
-            drop.Callback(value)
-        end
+        selectedValues = {value}
         updateDisplay()
+        drop.Callback(value)
     end
 end;
 
 -- Modified dropdown open function
 Button.MouseButton1Click:Connect(function()
     WindowTable.Dropdown:Setup(MFrame)
-    
-    -- Create a temporary table to track selection states for this opening
-    local tempOptionStates = {}
     
     -- Create the multi-select dropdown
     WindowTable.Dropdown:OpenMulti({
@@ -3655,14 +3613,9 @@ Button.MouseButton1Click:Connect(function()
                 effect = setSelectedFunc,
                 selected = table.find(selectedValues, optionName) ~= nil
             }
-            tempOptionStates[optionName] = optionStates[optionName]
             
             -- Set initial state
-            if optionName == "None" then
-                setSelectedFunc(#selectedValues == 0)
-            else
-                setSelectedFunc(table.find(selectedValues, optionName) ~= nil)
-            end
+            setSelectedFunc(table.find(selectedValues, optionName) ~= nil)
         end
     })
 end)
@@ -3715,7 +3668,7 @@ Refresh = function(newData)
         selectedValues = filtered
     else
         if selectedValues[1] and not table.find(drop.Data, selectedValues[1]) then
-            selectedValues = {drop.Data[1] or "None"}
+            selectedValues = {drop.Data[1]}
         end
     end
     updateDisplay()
@@ -3744,7 +3697,7 @@ SetOptions = function(table)
         selectedValues = filtered
     else
         if selectedValues[1] and not table.find(drop.Data, selectedValues[1]) then
-            selectedValues = {drop.Data[1] or "None"}
+            selectedValues = {drop.Data[1]}
         end
     end
     updateDisplay()
@@ -3760,6 +3713,11 @@ SetSelected = function(values)
         end
     end
     updateDisplay()
+    if drop.AllowMulti then
+        drop.Callback(selectedValues)
+    else
+        drop.Callback(selectedValues[1])
+    end
 end,
 GetSelected = function()
     return selectedValues
@@ -3767,7 +3725,12 @@ end
 };
 
 table.insert(SectionTable.Elements, el)
-return el;
+
+-- For testing: print immediately to verify callback works
+print("Dropdown created:", drop.Title)
+print("Initial value:", if drop.AllowMulti then table.concat(selectedValues, ", ") else selectedValues[1])
+
+return el
 end;
 function SectionTable:NewTextbox(conf)
 conf = Config(conf,{
