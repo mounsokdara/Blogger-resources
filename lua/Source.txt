@@ -4070,39 +4070,72 @@ return SectionTable;
 end;
 return TabTable;
 end;
-local dragToggle = nil;
+local dragToggle = false;
 local dragSpeed = 0.1;
 local dragStart = nil;
 local startPos = nil;
+local isDragging = false;
+
 local function updateInput(input)
-WindowTable.ElBlurUI.Update()
-local delta = input.Position - dragStart;
-local position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
-startPos.Y.Scale, startPos.Y.Offset + delta.Y);
-game:GetService('TweenService'):Create(MainFrame, TweenInfo.new(dragSpeed), {Position = position}):Play()
-if not WindowTable.WindowToggle then
-WindowTable.LastPosition = position 
-end
+    if not dragToggle then return end
+    
+    WindowTable.ElBlurUI.Update()
+    local delta = input.Position - dragStart;
+    local position = UDim2.new(
+        startPos.X.Scale, startPos.X.Offset + delta.X,
+        startPos.Y.Scale, startPos.Y.Offset + delta.Y
+    );
+    
+    game:GetService('TweenService'):Create(MainFrame, TweenInfo.new(dragSpeed), {Position = position}):Play()
+    
+    if not WindowTable.WindowToggle then
+        WindowTable.LastPosition = position 
+    end
 end;
+
+-- Only start drag when mouse is pressed on InputFrame
 InputFrame.InputBegan:Connect(function(input)
-if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
-dragToggle = true
-dragStart = input.Position
-startPos = MainFrame.Position
-input.Changed:Connect(function()
-if input.UserInputState == Enum.UserInputState.End then
-dragToggle = false;
-end;
-end)
-end;
-end)
+    if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+        dragToggle = true
+        isDragging = false -- Reset drag state
+        dragStart = input.Position
+        startPos = MainFrame.Position
+    end
+end);
+
+-- Track movement to detect actual dragging (not just clicking)
+InputFrame.InputChanged:Connect(function(input)
+    if dragToggle and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        -- Check if mouse has moved enough to consider it a drag
+        local delta = (input.Position - dragStart).Magnitude
+        if delta > 5 then -- Small threshold to avoid accidental drags
+            isDragging = true
+        end
+    end
+end);
+
+-- Global input handling for smooth dragging outside the frame
 Input.InputChanged:Connect(function(input)
-if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-if dragToggle then
-updateInput(input);
-end;
-end;
-end)
+    if dragToggle and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        if isDragging then -- Only update if we're actually dragging
+            updateInput(input);
+        end
+    end
+end);
+
+-- End drag when mouse button is released anywhere
+Input.InputEnded:Connect(function(input)
+    if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+        dragToggle = false;
+        isDragging = false;
+    end
+end);
+
+-- Also handle if mouse leaves the frame while dragging (optional)
+InputFrame.MouseLeave:Connect(function()
+    -- Don't stop dragging when mouse leaves the frame
+    -- This allows dragging outside the window
+end);
 WindowTable.SetKeybind = function(newKey)
     WindowTable.Keybind = newKey
 end
