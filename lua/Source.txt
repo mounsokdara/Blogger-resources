@@ -976,9 +976,6 @@ ImageTransparency = 0.6;
 Twen:Create(ValueId,TweenInfo.new(0.3),{
 TextTransparency = 0.8;
 }):Play()
-Twen:Create(ScrollingFrame,TweenInfo.new(0.3),{
-ScrollBarImageTransparency = 0.5;
-}):Play()
 Twen:Create(BlockFrame3,TweenInfo.new(0.3),{
 BackgroundTransparency = 0.8;
 }):Play()
@@ -1008,13 +1005,12 @@ if config.SearchEnabled then
     searchFrame.Name = "SearchFrame"
     searchFrame.Parent = DropdownFrame
     searchFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    searchFrame.BackgroundTransparency = 0.800
+    searchFrame.BackgroundTransparency = 0.600
     searchFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
     searchFrame.BorderSizePixel = 0
-    searchFrame.Size = UDim2.new(0.949999988, 0, 0, 25)
-    searchFrame.Position = UDim2.new(0.5, 0, 0.08, 0)
-    searchFrame.AnchorPoint = Vector2.new(0.5, 0)
-    searchFrame.ZIndex = 110
+    searchFrame.Size = UDim2.new(0.94, 0, 0, 25)
+    searchFrame.Position = UDim2.new(0.03, 0, 0.02, 0)
+    searchFrame.ZIndex = 103
     
     local searchCorner = Instance.new("UICorner")
     searchCorner.CornerRadius = UDim.new(0, 3)
@@ -1023,25 +1019,25 @@ if config.SearchEnabled then
     local searchIcon = Instance.new("ImageLabel")
     searchIcon.Name = "SearchIcon"
     searchIcon.Parent = searchFrame
-    searchIcon.AnchorPoint = Vector2.new(0, 0.5)
     searchIcon.BackgroundTransparency = 1.000
-    searchIcon.Position = UDim2.new(0.03, 0, 0.5, 0)
-    searchIcon.Size = UDim2.new(0, 15, 0, 15)
-    searchIcon.ZIndex = 111
-    searchIcon.Image = "rbxassetid://6031280882"
+    searchIcon.Size = UDim2.new(0, 16, 0, 16)
+    searchIcon.Position = UDim2.new(0, 5, 0.5, -8)
+    searchIcon.ZIndex = 104
+    searchIcon.Image = "rbxassetid://7072725342"
+    searchIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
     searchIcon.ImageTransparency = 0.500
     
     searchBox = Instance.new("TextBox")
     searchBox.Name = "SearchBox"
     searchBox.Parent = searchFrame
-    searchBox.AnchorPoint = Vector2.new(0, 0.5)
     searchBox.BackgroundTransparency = 1.000
-    searchBox.Position = UDim2.new(0.12, 0, 0.5, 0)
-    searchBox.Size = UDim2.new(0.85, 0, 0.9, 0)
-    searchBox.ZIndex = 111
+    searchBox.BorderSizePixel = 0
+    searchBox.Size = UDim2.new(1, -30, 1, 0)
+    searchBox.Position = UDim2.new(0, 25, 0, 0)
+    searchBox.ZIndex = 104
     searchBox.Font = Enum.Font.GothamBold
     searchBox.PlaceholderText = "Search..."
-    searchBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+    searchBox.PlaceholderColor3 = Color3.fromRGB(200, 200, 200)
     searchBox.Text = ""
     searchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
     searchBox.TextSize = 12.000
@@ -1050,44 +1046,42 @@ if config.SearchEnabled then
     searchBox.ClearTextOnFocus = false
     
     local searchStroke = Instance.new("UIStroke")
-    searchStroke.Transparency = 0.975
+    searchStroke.Transparency = 0.950
     searchStroke.Color = Color3.fromRGB(255, 255, 255)
     searchStroke.Parent = searchFrame
     
-    local function updateOptionsPosition()
-        ScrollingFrame.Position = UDim2.new(0.5, 0, 0.25, 0)
-        ScrollingFrame.Size = UDim2.new(0.949999988, 0, 0.7, 0)
-    end
-    updateOptionsPosition()
+    -- Adjust ScrollingFrame position when search is enabled
+    ScrollingFrame.Position = UDim2.new(0.5, 0, 0.155985212, 0)
+    ScrollingFrame.Size = UDim2.new(0.949999988, 0, 0.788029099, 0)
 else
-    ScrollingFrame.Position = UDim2.new(0.5, 0, 0.555985212, 0)
+    ScrollingFrame.Position = UDim2.new(0.5, 0, 0.055985212, 0)
     ScrollingFrame.Size = UDim2.new(0.949999988, 0, 0.888029099, 0)
 end
 
-local allOptions = {}
-for i, optionName in ipairs(config.Data) do
-    table.insert(allOptions, optionName)
-end
-
-local function filterOptions(searchText)
+local function createOptions(filterText)
     for i,v in pairs(ScrollingFrame:GetChildren()) do
-        if v ~= Block and v:IsA('Frame') then
-            v:Destroy();
+        if v ~= Block then
+            if v:IsA('Frame') then
+                v:Destroy();
+            end;
         end;
-    end;
+    end
     
     optionButtons = {}
     
-    local filteredOptions = {}
-    searchText = searchText:lower()
-    
-    for _, optionName in ipairs(allOptions) do
-        if searchText == "" or optionName:lower():find(searchText, 1, true) then
-            table.insert(filteredOptions, optionName)
+    local filteredData = {}
+    if config.SearchEnabled and searchBox and filterText ~= "" then
+        local lowerFilter = filterText:lower()
+        for _, item in ipairs(config.Data) do
+            if tostring(item):lower():find(lowerFilter, 1, true) then
+                table.insert(filteredData, item)
+            end
         end
+    else
+        filteredData = config.Data
     end
     
-    for _, optionName in ipairs(filteredOptions) do
+    for i, optionName in ipairs(filteredData) do
         local isSelected = false
         
         if config.AllowMulti then
@@ -1159,13 +1153,24 @@ local function filterOptions(searchText)
     end
 end
 
-if searchBox then
+createOptions("")
+
+if config.SearchEnabled and searchBox then
     searchBox:GetPropertyChangedSignal("Text"):Connect(function()
-        filterOptions(searchBox.Text)
+        createOptions(searchBox.Text)
     end)
 end
 
-filterOptions("")
+-- Update dropdown size to accommodate search box
+if config.SearchEnabled then
+    Twen:Create(DropdownFrame,TweenInfo.new(0.15),{
+        Size = UDim2.new(0, DropdownFrame.Size.X.Offset, 0, 180)
+    }):Play()
+else
+    Twen:Create(DropdownFrame,TweenInfo.new(0.15),{
+        Size = UDim2.new(0, DropdownFrame.Size.X.Offset, 0, 150)
+    }):Play()
+end
 end;
 
 local MouseInFrame = false;
