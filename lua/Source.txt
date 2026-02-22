@@ -2885,85 +2885,14 @@ end,
 end;
 function CollapsibleTable:NewImage(cfg)
 cfg = Config(cfg,{
-    ImageId = "rbxassetid://0", -- legacy support
-    Image = nil, -- can be asset id or url
-    ImageUrl = nil, -- url based only
-    Size = UDim2.new(0.98, 0, 0.5, 0)
+ImageId = "rbxassetid://0",
+Size = UDim2.new(0.98, 0, 0.5, 0)
 });
-
--- Helper function to handle image loading
-local function processImageSource(config)
-    local imageSource = config.Image or config.ImageUrl or config.ImageId
-    
-    -- If it's a URL (starts with http)
-    if type(imageSource) == "string" and (imageSource:lower():match("^https?://")) then
-        local success, result = pcall(function()
-            -- Generate filename from URL
-            local filename = "temp_image_" .. math.random(100000, 999999) .. ".png"
-            
-            -- Try different HTTP request methods
-            local request = http_request or (syn and syn.request) or request or (game:GetService("HttpService") and function(t)
-                return {Body = game:GetService("HttpService"):GetAsync(t.Url)}
-            end)
-            
-            if request then
-                local response = request({
-                    Url = imageSource,
-                    Method = "GET"
-                })
-                
-                if response and response.Body then
-                    writefile(filename, response.Body)
-                    
-                    -- Schedule deletion after 5 minutes or when game closes
-                    local imageAsset = getcustomasset(filename)
-                    
-                    -- Cleanup after 5 minutes
-                    task.delay(300, function()
-                        pcall(function()
-                            if isfile(filename) then
-                                delfile(filename)
-                            end
-                        end)
-                    end)
-                    
-                    return imageAsset
-                end
-            end
-        end)
-        
-        if success and result then
-            return result
-        else
-            -- Fallback to placeholder if download fails
-            warn("Failed to load image from URL: " .. imageSource)
-            return "rbxassetid://0"
-        end
-    else
-        -- Handle asset ID (convert number to rbxassetid if needed)
-        if type(imageSource) == "number" then
-            return "rbxassetid://" .. imageSource
-        elseif type(imageSource) == "string" then
-            -- If it's already an asset URL or just the ID number
-            if imageSource:match("^%d+$") then
-                return "rbxassetid://" .. imageSource
-            else
-                return imageSource
-            end
-        end
-    end
-    
-    return "rbxassetid://0" -- Default fallback
-end
-
-local finalImage = processImageSource(cfg)
-
 local FunctionImage = Instance.new("Frame")
 local UIAspectRatioConstraint = Instance.new("UIAspectRatioConstraint")
 local ImageLabel = Instance.new("ImageLabel")
 local UICorner = Instance.new("UICorner")
 local UIGradient = Instance.new("UIGradient")
-
 FunctionImage.Name = "FunctionImage"
 FunctionImage.Parent = Content
 FunctionImage.BackgroundColor3 = Color3.fromRGB(17, 17, 17)
@@ -2972,11 +2901,9 @@ FunctionImage.BorderColor3 = Color3.fromRGB(0, 0, 0)
 FunctionImage.BorderSizePixel = 0
 FunctionImage.Size = cfg.Size
 FunctionImage.ZIndex = 17
-
 UIAspectRatioConstraint.Parent = FunctionImage
 UIAspectRatioConstraint.AspectRatio = 2.500
 UIAspectRatioConstraint.AspectType = Enum.AspectType.ScaleWithParentSize
-
 ImageLabel.Name = "ImageLabel"
 ImageLabel.Parent = FunctionImage
 ImageLabel.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -2987,53 +2914,25 @@ ImageLabel.BorderSizePixel = 0
 ImageLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
 ImageLabel.Size = UDim2.new(1, 0, 1, 0)
 ImageLabel.ZIndex = 18
-ImageLabel.Image = finalImage
+ImageLabel.Image = cfg.ImageId
 ImageLabel.ImageTransparency = 1
 ImageLabel.ScaleType = Enum.ScaleType.Fit
-
 Twen:Create(ImageLabel,TweenInfo1,{ImageTransparency = 0}):Play();
-
 UICorner.CornerRadius = UDim.new(0, 2)
 UICorner.Parent = FunctionImage
-
 UIGradient.Rotation = 90
-UIGradient.Transparency = NumberSequence.new{
-    NumberSequenceKeypoint.new(0.00, 0.00), 
-    NumberSequenceKeypoint.new(0.75, 0.27), 
-    NumberSequenceKeypoint.new(1.00, 1.00)
-}
+UIGradient.Transparency = NumberSequence.new{NumberSequenceKeypoint.new(0.00, 0.00), NumberSequenceKeypoint.new(0.75, 0.27), NumberSequenceKeypoint.new(1.00, 1.00)}
 UIGradient.Parent = ImageLabel
-
--- Store filename for potential cleanup reference
-local currentFilename = nil
-
 return {
-    Visible = function(newindx)
-        FunctionImage.Visible = newindx
-    end,
-    
-    SetImage = function(newSource)
-        local newImage = processImageSource({Image = newSource})
-        ImageLabel.Image = newImage
-    end,
-    
-    -- Method to reload image (useful if URL needs refreshing)
-    Reload = function()
-        if cfg.ImageUrl then
-            local newImage = processImageSource({ImageUrl = cfg.ImageUrl})
-            ImageLabel.Image = newImage
-        end
-    end,
-    
-    -- Clean up downloaded files manually
-    Cleanup = function()
-        if currentFilename and isfile(currentFilename) then
-            pcall(function()
-                delfile(currentFilename)
-            end)
-        end
-    end
+Visible = function(newindx)
+FunctionImage.Visible = newindx
+end,
+SetImage = function(newId)
+ImageLabel.Image = newId
+end,
 };
+end;
+return CollapsibleTable;
 end;
 function SectionTable:NewToggle(toggle)
 toggle = Config(toggle,{
