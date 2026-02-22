@@ -403,7 +403,6 @@ local UIListLayout = Instance.new("UIListLayout")
 local MainTabFrame = Instance.new("Frame")
 local UICorner_7 = Instance.new("UICorner")
 local InputFrame = Instance.new("Frame")
--- Add this at the top of your script
 local UIHelper = {}
 
 function UIHelper.IsMouseOverFrame(Frame: GuiObject, Position: Vector3): boolean
@@ -424,7 +423,6 @@ function UIHelper.IsMoveInput(Input: InputObject): boolean
 		and (Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch)
 end
 
--- Your existing dragging code
 local dragToggle = false
 local dragStart = nil
 local startPos = nil
@@ -4145,7 +4143,6 @@ return SectionTable;
 end;
 return TabTable;
 end;
-local UIHelper = require(path.to.UIHelper)
 WindowTable.SetKeybind = function(newKey)
     WindowTable.Keybind = newKey
 end
@@ -4799,6 +4796,7 @@ local default =
 <font color="rgb(255,125,0)">UI</font>: KDE Plasma 6
 ]];
 overview:print(default)
+local UIHelper = require(path.to.UIHelper)
 end,
 clear = function()
 for i,v in ipairs(cmdFrame:GetChildren()) do
