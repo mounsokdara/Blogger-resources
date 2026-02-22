@@ -4070,55 +4070,57 @@ return SectionTable;
 end;
 return TabTable;
 end;
-local UIHelper = require(path.to.UIHelper) -- Replace with actual path
-
-local dragToggle = nil
+local dragToggle = false
 local dragStart = nil
 local startPos = nil
 
 local function updateInput(input)
-	if not dragToggle then return end
-	
-	WindowTable.ElBlurUI.Update()
-	
-	local delta = input.Position - dragStart
-	local position = UDim2.new(
-		startPos.X.Scale, 
-		startPos.X.Offset + delta.X,
-		startPos.Y.Scale, 
-		startPos.Y.Offset + delta.Y
-	)
-	
-	MainFrame.Position = position
-	
-	if not WindowTable.WindowToggle then
-		WindowTable.LastPosition = position 
-	end
+    if not dragToggle then return end
+    
+    WindowTable.ElBlurUI.Update()
+    
+    local delta = input.Position - dragStart
+    local position = UDim2.new(
+        startPos.X.Scale, 
+        startPos.X.Offset + delta.X,
+        startPos.Y.Scale, 
+        startPos.Y.Offset + delta.Y
+    )
+    
+    MainFrame.Position = position
+    
+    if not WindowTable.WindowToggle then
+        WindowTable.LastPosition = position 
+    end
 end
 
 InputFrame.InputBegan:Connect(function(input)
-	if UIHelper.IsClickInput(input) then
-		if UIHelper.IsMouseOverFrame(InputFrame, input.Position) then
-			dragToggle = true
-			dragStart = input.Position
-			startPos = MainFrame.Position
-			
-			input.Changed:Connect(function()
-				if input.UserInputState == Enum.UserInputState.End then
-					dragToggle = false
-				end
-			end)
-		end
-	end
+    if UIHelper.IsClickInput(input) then
+        if UIHelper.IsMouseOverFrame(InputFrame, input.Position) then
+            dragToggle = true
+            dragStart = input.Position
+            startPos = MainFrame.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragToggle = false
+                end
+            end)
+        end
+    end
+end)
+
+InputFrame.InputChanged:Connect(function(input)
+    if UIHelper.IsMoveInput(input) and dragToggle then
+        updateInput(input)
+    end
 end)
 
 local UserInputService = game:GetService("UserInputService")
 UserInputService.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-		if dragToggle then
-			updateInput(input)
-		end
-	end
+    if UIHelper.IsMoveInput(input) and dragToggle then
+        updateInput(input)
+    end
 end)
 WindowTable.SetKeybind = function(newKey)
     WindowTable.Keybind = newKey
