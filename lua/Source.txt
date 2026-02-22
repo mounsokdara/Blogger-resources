@@ -111,37 +111,85 @@ local Icons = (function()
     end
     
     function IconModule.Icon(Icon, Type)
-        local iconType, iconName = parseIconString(Icon)
-        local targetType = iconType or Type or IconModule.IconsType
-        local targetName = iconName or Icon
-        local iconSet = IconModule.Icons[targetType]
-        
-        if not iconSet then 
-            if targetName and (targetName:match("^rbxassetid://") or targetName:match("^http")) then
-                local asset = targetName:match("^http") and downloadImage(targetName) or targetName
-                return { asset, { ImageRectSize = Vector2.new(0,0), ImageRectPosition = Vector2.new(0,0), Parts = nil } }
+    local iconType, iconName = parseIconString(Icon)
+    local targetType = iconType or Type or IconModule.IconsType
+    local targetName = iconName or Icon
+    local iconSet = IconModule.Icons[targetType]
+    
+    if not iconSet then 
+        if targetName and (targetName:match("^rbxassetid://") or targetName:match("^https?://")) then
+            if targetName:match("^https?://") then
+                -- Download URL image
+                local filename = "TempIcon_" .. tostring(math.random(1000, 9999)) .. "_" .. tick() .. ".png"
+                local filepath = filename
+                local imageAsset = targetName
+                
+                local httpRequest = syn and syn.request or http_request or request
+                
+                if httpRequest then
+                    pcall(function()
+                        local response = httpRequest({
+                            Url = targetName,
+                            Method = "GET"
+                        })
+                        
+                        if response and response.Body then
+                            writefile(filepath, response.Body)
+                            imageAsset = getcustomasset(filepath)
+                        end
+                    end)
+                end
+                
+                return { imageAsset, { ImageRectSize = Vector2.new(0,0), ImageRectPosition = Vector2.new(0,0), Parts = nil } }
+            else
+                return { targetName, { ImageRectSize = Vector2.new(0,0), ImageRectPosition = Vector2.new(0,0), Parts = nil } }
             end
-            return nil 
         end
-        
-        if iconSet[targetName] and (type(iconSet[targetName]) == "string" or type(iconSet[targetName]) == "number") then
-            local asset = type(iconSet[targetName]) == "number" and "rbxassetid://" .. iconSet[targetName] or iconSet[targetName]
-            return { asset, { ImageRectSize = Vector2.new(0,0), ImageRectPosition = Vector2.new(0,0), Parts = nil } }
-        end
-        
-        if iconSet.Icons and iconSet.Icons[targetName] then
-            local data = iconSet.Icons[targetName]
-            local imageId = type(data.Image) == "number" and "rbxassetid://" .. data.Image or data.Image
-            return { iconSet.Spritesheets[imageId] or imageId, data }
-        end
-        
-        if targetName and (targetName:match("^rbxassetid://") or targetName:match("^http")) then
-            local asset = targetName:match("^http") and downloadImage(targetName) or targetName
-            return { asset, { ImageRectSize = Vector2.new(0,0), ImageRectPosition = Vector2.new(0,0), Parts = nil } }
-        end
-        
-        return nil
+        return nil 
     end
+    
+    if iconSet[targetName] and (type(iconSet[targetName]) == "string" or type(iconSet[targetName]) == "number") then
+        local asset = type(iconSet[targetName]) == "number" and "rbxassetid://" .. iconSet[targetName] or iconSet[targetName]
+        return { asset, { ImageRectSize = Vector2.new(0,0), ImageRectPosition = Vector2.new(0,0), Parts = nil } }
+    end
+    
+    if iconSet.Icons and iconSet.Icons[targetName] then
+        local data = iconSet.Icons[targetName]
+        local imageId = type(data.Image) == "number" and "rbxassetid://" .. data.Image or data.Image
+        return { iconSet.Spritesheets[imageId] or imageId, data }
+    end
+    
+    if targetName and (targetName:match("^rbxassetid://") or targetName:match("^https?://")) then
+        if targetName:match("^https?://") then
+            -- Download URL image
+            local filename = "TempIcon_" .. tostring(math.random(1000, 9999)) .. "_" .. tick() .. ".png"
+            local filepath = filename
+            local imageAsset = targetName
+            
+            local httpRequest = syn and syn.request or http_request or request
+            
+            if httpRequest then
+                pcall(function()
+                    local response = httpRequest({
+                        Url = targetName,
+                        Method = "GET"
+                    })
+                    
+                    if response and response.Body then
+                        writefile(filepath, response.Body)
+                        imageAsset = getcustomasset(filepath)
+                    end
+                end)
+            end
+            
+            return { imageAsset, { ImageRectSize = Vector2.new(0,0), ImageRectPosition = Vector2.new(0,0), Parts = nil } }
+        else
+            return { targetName, { ImageRectSize = Vector2.new(0,0), ImageRectPosition = Vector2.new(0,0), Parts = nil } }
+        end
+    end
+    
+    return nil
+end
     
     function IconModule.Image(IconConfig)
         IconConfig = IconConfig or {}
@@ -434,12 +482,23 @@ Description = "Description",
 Keybind = Enum.KeyCode.LeftControl,
 Logo = "rbxassetid://0",
 Size = UDim2.new(0.100000001, 445, 0.100000001, 315),
-ConfigFolder = ""
+ConfigFolder = "/"
 });
 local function processLogo(logo)
     if type(logo) == "string" then
-        if logo:match("^http") and not logo:match("^rbxassetid://") then
+        if logo:match("^%d+$") then
+            return "rbxassetid://" .. logo
+        end
+        if logo:match("roblox%.com") and logo:match("id=(%d+)") then
+            local id = logo:match("id=(%d+)")
+            if id then
+                return "rbxassetid://" .. id
+            end
+        end
+        if logo:match("^https?://") then
             local filename = "TempLogo_" .. tostring(math.random(1000, 9999)) .. "_" .. tick() .. ".png"
+            local filepath = filename
+            local imageAsset = logo 
             local httpRequest = syn and syn.request or http_request or request
             if httpRequest then
                 pcall(function()
@@ -448,18 +507,17 @@ local function processLogo(logo)
                         Method = "GET"
                     })
                     if response and response.Body then
-                        writefile(filename, response.Body)
-                        return getcustomasset(filename)
+                        writefile(filepath, response.Body)
+                        imageAsset = getcustomasset(filepath)
                     end
                 end)
             end
-        elseif type(logo) == "number" then
-            return "rbxassetid://" .. logo
-        elseif logo:match("^%d+$") then
-            return "rbxassetid://" .. logo
+            return imageAsset
         end
+    elseif type(logo) == "number" then
+        return "rbxassetid://" .. logo
     end
-    return logo
+    return logo 
 end
 config.Logo = processLogo(config.Logo)
 local TweenInfo1 = TweenInfo.new(0.5,Enum.EasingStyle.Quint,Enum.EasingDirection.InOut);
