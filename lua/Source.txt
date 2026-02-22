@@ -188,6 +188,91 @@ return string.reverse(string.gsub(game:GetService('HttpService'):GenerateGUID(fa
 return string.reverse(aa)
 end))
 end
+-- Drag System Module
+local DragSystem = (function()
+    local drag = {}
+    
+    function drag.IsMouseOverFrame(Frame: GuiObject, Position: Vector3): boolean
+        local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize
+        return Position.X >= AbsPos.X
+            and Position.X <= AbsPos.X + AbsSize.X
+            and Position.Y >= AbsPos.Y
+            and Position.Y <= AbsPos.Y + AbsSize.Y
+    end
+    
+    function drag.IsClickInput(Input: InputObject): boolean
+        return Input.UserInputState == Enum.UserInputState.Begin
+            and (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch)
+    end
+    
+    function drag.IsMoveInput(Input: InputObject): boolean
+        return Input.UserInputState == Enum.UserInputState.Change
+            and (Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch)
+    end
+    
+    function drag.MakeDraggable(WindowTable, dragFrame, DragFrame)
+        if not WindowTable or not dragFrame or not DragFrame then
+            return WindowTable
+        end
+        
+        local dragging = false
+        local dragStart = nil
+        local startPos = nil
+        local UserInputService = game:GetService("UserInputService")
+        
+        local function updatePosition(input)
+            if not dragging then return end
+            
+            local delta = input.Position - dragStart
+            dragFrame.Position = UDim2.new(
+                startPos.X.Scale, 
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale, 
+                startPos.Y.Offset + delta.Y
+            )
+            
+            if WindowTable and not WindowTable.WindowToggle then
+                WindowTable.LastPosition = dragFrame.Position
+            end
+            
+            if WindowTable and WindowTable.ElBlurUI and WindowTable.ElBlurUI.Update then
+                WindowTable.ElBlurUI.Update()
+            end
+        end
+        
+        DragFrame.InputBegan:Connect(function(input)
+            if drag.IsClickInput(input) then
+                if drag.IsMouseOverFrame(DragFrame, input.Position) then
+                    dragging = true
+                    dragStart = input.Position
+                    startPos = dragFrame.Position
+                    
+                    input.Changed:Connect(function()
+                        if input.UserInputState == Enum.UserInputState.End then
+                            dragging = false
+                        end
+                    end)
+                end
+            end
+        end)
+        
+        DragFrame.InputChanged:Connect(function(input)
+            if drag.IsMoveInput(input) and dragging then
+                updatePosition(input)
+            end
+        end)
+        
+        UserInputService.InputChanged:Connect(function(input)
+            if drag.IsMoveInput(input) and dragging then
+                updatePosition(input)
+            end
+        end)
+        
+        return WindowTable
+    end
+    
+    return drag
+end)()
 local function Hiter(planePos, planeNormal, rayOrigin, rayDirection)
 local n = planeNormal
 local d = rayDirection
@@ -4070,88 +4155,41 @@ return SectionTable;
 end;
 return TabTable;
 end;
--- Add this after your existing service declarations (around line 1-6)
-local drag = {}
 
-function drag.IsMouseOverFrame(Frame: GuiObject, Position: Vector3): boolean
-	local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize
-	return Position.X >= AbsPos.X
-		and Position.X <= AbsPos.X + AbsSize.X
-		and Position.Y >= AbsPos.Y
-		and Position.Y <= AbsPos.Y + AbsSize.Y
-end
 
-function drag.IsClickInput(Input: InputObject): boolean
-	return Input.UserInputState == Enum.UserInputState.Begin
-		and (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch)
-end
 
-function drag.IsMoveInput(Input: InputObject): boolean
-	return Input.UserInputState == Enum.UserInputState.Change
-		and (Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch)
-end
 
-function drag.MakeDraggable(WindowTable, drag, DragFrame)
-	if not WindowTable or not drag or not DragFrame then
-		return WindowTable
-	end
-	
-	local dragging = false
-	local dragStart = nil
-	local startPos = nil
-	local UserInputService = game:GetService("UserInputService")
-	
-	local function updatePosition(input)
-		if not dragging then return end
-		
-		local delta = input.Position - dragStart
-		drag.Position = UDim2.new(
-			startPos.X.Scale, 
-			startPos.X.Offset + delta.X,
-			startPos.Y.Scale, 
-			startPos.Y.Offset + delta.Y
-		)
-		
-		if WindowTable and not WindowTable.WindowToggle then
-			WindowTable.LastPosition = drag.Position
-		end
-		
-		if WindowTable and WindowTable.ElBlurUI and WindowTable.ElBlurUI.Update then
-			WindowTable.ElBlurUI.Update()
-		end
-	end
-	
-	DragFrame.InputBegan:Connect(function(input)
-		if drag.IsClickInput(input) then
-			if drag.IsMouseOverFrame(DragFrame, input.Position) then
-				dragging = true
-				dragStart = input.Position
-				startPos = drag.Position
-				
-				input.Changed:Connect(function()
-					if input.UserInputState == Enum.UserInputState.End then
-						dragging = false
-					end
-				end)
-			end
-		end
-	end)
-	
-	DragFrame.InputChanged:Connect(function(input)
-		if drag.IsMoveInput(input) and dragging then
-			updatePosition(input)
-		end
-	end)
-	
-	UserInputService.InputChanged:Connect(function(input)
-		if drag.IsMoveInput(input) and dragging then
-			updatePosition(input)
-		end
-	end)
-	
-	return WindowTable
+DragSystem.MakeDraggable(WindowTable, MainFrame, InputFrame)
+
+
+WindowTable.SetKeybind = function(newKey)
+    WindowTable.Keybind = newKey
 end
-drag.MakeDraggable(WindowTable, MainFrame, InputFrame)
+return WindowTable;
+end;
+Library.NewAuth = function(conf)
+conf = Config(conf,{
+Title = "Sugar $ KEY SYSTEM",
+GetKey = function() return 'https://example.com' end,
+Auth = function(key) if key == '1 or 1' then return key; end; end,
+Freeze = false,
+});
+if conf.Auth then
+if debug.info(conf.Auth,'s') == '[C]' then
+if error then
+error('huh');
+end;
+return;
+end
+end;
+if conf.GetKey then
+if debug.info(conf.GetKey,'s') == '[C]' then
+if error then
+error('huh');
+end;
+return;
+end
+end;
 local ScreenGui = Instance.new("ScreenGui")
 local vaid = Instance.new('BindableEvent')
 local Auth = Instance.new("Frame")
