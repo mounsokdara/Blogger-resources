@@ -21,6 +21,87 @@ local Icons = (function()
         end)
         return success and result or {}
     end
+    -- Add this after the other service declarations (around line 10-20)
+local MainFrame = {}
+
+function MainFrame.IsMouseOverFrame(Frame: GuiObject, Position: Vector3): boolean
+	local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize
+	return Position.X >= AbsPos.X
+		and Position.X <= AbsPos.X + AbsSize.X
+		and Position.Y >= AbsPos.Y
+		and Position.Y <= AbsPos.Y + AbsSize.Y
+end
+
+function MainFrame.IsClickInput(Input: InputObject): boolean
+	return Input.UserInputState == Enum.UserInputState.Begin
+		and (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch)
+end
+
+function MainFrame.IsMoveInput(Input: InputObject): boolean
+	return Input.UserInputState == Enum.UserInputState.Change
+		and (Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch)
+end
+
+function MainFrame.MakeDraggable(WindowTable, MainFrame, DragFrame)
+	if not WindowTable or not MainFrame or not DragFrame then
+		return WindowTable
+	end
+	
+	local dragging = false
+	local dragStart = nil
+	local startPos = nil
+	local UserInputService = game:GetService("UserInputService")
+	
+	local function updatePosition(input)
+		if not dragging then return end
+		
+		local delta = input.Position - dragStart
+		MainFrame.Position = UDim2.new(
+			startPos.X.Scale, 
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale, 
+			startPos.Y.Offset + delta.Y
+		)
+		
+		if WindowTable and not WindowTable.WindowToggle then
+			WindowTable.LastPosition = MainFrame.Position
+		end
+		
+		if WindowTable and WindowTable.ElBlurUI and WindowTable.ElBlurUI.Update then
+			WindowTable.ElBlurUI.Update()
+		end
+	end
+	
+	DragFrame.InputBegan:Connect(function(input)
+		if MainFrame.IsClickInput(input) then
+			if MainFrame.IsMouseOverFrame(DragFrame, input.Position) then
+				dragging = true
+				dragStart = input.Position
+				startPos = MainFrame.Position
+				
+				input.Changed:Connect(function()
+					if input.UserInputState == Enum.UserInputState.End then
+						dragging = false
+					end
+				end)
+			end
+		end
+	end)
+	
+	DragFrame.InputChanged:Connect(function(input)
+		if MainFrame.IsMoveInput(input) and dragging then
+			updatePosition(input)
+		end
+	end)
+	
+	UserInputService.InputChanged:Connect(function(input)
+		if MainFrame.IsMoveInput(input) and dragging then
+			updatePosition(input)
+		end
+	end)
+	
+	return WindowTable
+end
     IconModule.Icons["lucide"] = safeLoad("https://raw.githubusercontent.com/Footagesus/Icons/refs/heads/main/lucide/dist/Icons.lua")
     IconModule.Icons["craft"] = safeLoad("https://raw.githubusercontent.com/Footagesus/Icons/refs/heads/main/craft/dist/Icons.lua")
     IconModule.Icons["geist"] = safeLoad("https://raw.githubusercontent.com/Footagesus/Icons/refs/heads/main/geist/dist/Icons.lua")
@@ -752,6 +833,32 @@ InputFrame.BorderSizePixel = 0
 InputFrame.Position = UDim2.new(0, 0, 0, 0)
 InputFrame.Size = UDim2.new(1, 0, 0.12, 0) 
 InputFrame.ZIndex = 15;
+MainFrame.MakeDraggable(WindowTable, MainFrame, InputFrame)
+local function updatePosition(input)
+	if not dragging then return end
+	
+	local delta = input.Position - dragStart
+	local newPosition = UDim2.new(
+		startPos.X.Scale, 
+		startPos.X.Offset + delta.X,
+		startPos.Y.Scale, 
+		startPos.Y.Offset + delta.Y
+	)
+	
+	-- Add tweening for smooth movement
+	game:GetService("TweenService"):Create(MainFrame, 
+		TweenInfo.new(0.1, Enum.EasingStyle.Quint), 
+		{Position = newPosition}
+	):Play()
+	
+	if WindowTable and not WindowTable.WindowToggle then
+		WindowTable.LastPosition = newPosition
+	end
+	
+	if WindowTable and WindowTable.ElBlurUI and WindowTable.ElBlurUI.Update then
+		WindowTable.ElBlurUI.Update()
+	end
+end
 task.spawn(function()
 local Locked = nil;
 local Looped = false;
@@ -4070,53 +4177,7 @@ return SectionTable;
 end;
 return TabTable;
 end;
-local dragging = false
-local dragStart = nil
-local startPos = nil
 
-local function updatePosition(input)
-    if not dragging then return end
-    local delta = input.Position - dragStart
-    MainFrame.Position = UDim2.new(
-        startPos.X.Scale, 
-        startPos.X.Offset + delta.X,
-        startPos.Y.Scale, 
-        startPos.Y.Offset + delta.Y
-    )
-    WindowTable.LastPosition = MainFrame.Position
-    if WindowTable.ElBlurUI and WindowTable.ElBlurUI.Update then
-        WindowTable.ElBlurUI.Update()
-    end
-end
-
-InputFrame.InputBegan:Connect(function(input)
-    if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
-        dragging = true
-        dragStart = input.Position
-        startPos = MainFrame.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
-end)
-
-InputFrame.InputChanged:Connect(function(input)
-    if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        if dragging then
-            updatePosition(input)
-        end
-    end
-end)
-
-Input.InputChanged:Connect(function(input)
-    if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        if dragging then
-            updatePosition(input)
-        end
-    end
-end)
 local ScreenGui = Instance.new("ScreenGui")
 local vaid = Instance.new('BindableEvent')
 local Auth = Instance.new("Frame")
