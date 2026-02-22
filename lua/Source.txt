@@ -2886,13 +2886,18 @@ end;
 function CollapsibleTable:NewImage(cfg)
 cfg = Config(cfg,{
 ImageId = "rbxassetid://0",
+Image = nil,
+ImageUrl = nil,
 Size = UDim2.new(0.98, 0, 0.5, 0)
 });
+
 local FunctionImage = Instance.new("Frame")
 local UIAspectRatioConstraint = Instance.new("UIAspectRatioConstraint")
 local ImageLabel = Instance.new("ImageLabel")
 local UICorner = Instance.new("UICorner")
 local UIGradient = Instance.new("UIGradient")
+local LoadingLabel = Instance.new("TextLabel")
+
 FunctionImage.Name = "FunctionImage"
 FunctionImage.Parent = Content
 FunctionImage.BackgroundColor3 = Color3.fromRGB(17, 17, 17)
@@ -2901,9 +2906,25 @@ FunctionImage.BorderColor3 = Color3.fromRGB(0, 0, 0)
 FunctionImage.BorderSizePixel = 0
 FunctionImage.Size = cfg.Size
 FunctionImage.ZIndex = 17
+FunctionImage.ClipsDescendants = true
+
 UIAspectRatioConstraint.Parent = FunctionImage
 UIAspectRatioConstraint.AspectRatio = 2.500
 UIAspectRatioConstraint.AspectType = Enum.AspectType.ScaleWithParentSize
+
+LoadingLabel.Name = "LoadingLabel"
+LoadingLabel.Parent = FunctionImage
+LoadingLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+LoadingLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
+LoadingLabel.Size = UDim2.new(0.8, 0, 0.3, 0)
+LoadingLabel.BackgroundTransparency = 1
+LoadingLabel.Font = Enum.Font.GothamBold
+LoadingLabel.Text = "Loading Image..."
+LoadingLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+LoadingLabel.TextScaled = true
+LoadingLabel.Visible = true
+LoadingLabel.ZIndex = 19
+
 ImageLabel.Name = "ImageLabel"
 ImageLabel.Parent = FunctionImage
 ImageLabel.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -2914,22 +2935,145 @@ ImageLabel.BorderSizePixel = 0
 ImageLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
 ImageLabel.Size = UDim2.new(1, 0, 1, 0)
 ImageLabel.ZIndex = 18
-ImageLabel.Image = cfg.ImageId
+ImageLabel.Image = ""
 ImageLabel.ImageTransparency = 1
 ImageLabel.ScaleType = Enum.ScaleType.Fit
-Twen:Create(ImageLabel,TweenInfo1,{ImageTransparency = 0}):Play();
+ImageLabel.Visible = false
+
 UICorner.CornerRadius = UDim.new(0, 2)
 UICorner.Parent = FunctionImage
+
 UIGradient.Rotation = 90
 UIGradient.Transparency = NumberSequence.new{NumberSequenceKeypoint.new(0.00, 0.00), NumberSequenceKeypoint.new(0.75, 0.27), NumberSequenceKeypoint.new(1.00, 1.00)}
 UIGradient.Parent = ImageLabel
+
+local function getImageSource()
+    if cfg.Image then
+        if type(cfg.Image) == "string" then
+            if cfg.Image:match("^rbxassetid://") or cfg.Image:match("^http") then
+                return cfg.Image
+            else
+                return "rbxassetid://" .. cfg.Image
+            end
+        end
+    elseif cfg.ImageUrl then
+        return cfg.ImageUrl
+    elseif cfg.ImageId then
+        if type(cfg.ImageId) == "number" then
+            return "rbxassetid://" .. cfg.ImageId
+        elseif cfg.ImageId:match("^rbxassetid://") then
+            return cfg.ImageId
+        else
+            return "rbxassetid://" .. cfg.ImageId
+        end
+    end
+    return nil
+end
+
+local function downloadImage(url)
+    if url:match("^rbxassetid://") then
+        return url
+    end
+    
+    local filename = "TempImage_" .. tostring(math.random(1000, 9999)) .. "_" .. tick() .. ".png"
+    local filepath = filename
+    local imageAsset = url
+    
+    local httpRequest = syn and syn.request or http_request or request
+    
+    if httpRequest then
+        pcall(function()
+            local response = httpRequest({
+                Url = url,
+                Method = "GET"
+            })
+            
+            if response and response.Body then
+                writefile(filepath, response.Body)
+                imageAsset = getcustomasset(filepath)
+            end
+        end)
+    end
+    
+    return imageAsset
+end
+
+local imageSource = getImageSource()
+if imageSource then
+    LoadingLabel.Visible = true
+    ImageLabel.Visible = false
+    
+    local finalImage = downloadImage(imageSource)
+    
+    ImageLabel.Image = finalImage
+    
+    task.wait(0.1)
+    LoadingLabel.Visible = false
+    ImageLabel.Visible = true
+    
+    Twen:Create(ImageLabel,TweenInfo1,{ImageTransparency = 0}):Play()
+else
+    LoadingLabel.Text = "No Image Source"
+end
+
 return {
-Visible = function(newindx)
-FunctionImage.Visible = newindx
-end,
-SetImage = function(newId)
-ImageLabel.Image = newId
-end,
+    Visible = function(newindx)
+        FunctionImage.Visible = newindx
+    end,
+    
+    SetImage = function(newId, isUrl)
+        LoadingLabel.Visible = true
+        ImageLabel.Visible = false
+        
+        local source = newId
+        if isUrl then
+            source = downloadImage(newId)
+        else
+            if type(source) == "number" then
+                source = "rbxassetid://" .. source
+            elseif not source:match("^rbxassetid://") then
+                source = "rbxassetid://" .. source
+            end
+        end
+        
+        ImageLabel.Image = source
+        LoadingLabel.Visible = false
+        ImageLabel.Visible = true
+        Twen:Create(ImageLabel,TweenInfo1,{ImageTransparency = 0}):Play()
+    end,
+    
+    SetImageUrl = function(url)
+        LoadingLabel.Visible = true
+        ImageLabel.Visible = false
+        
+        local source = downloadImage(url)
+        
+        ImageLabel.Image = source
+        LoadingLabel.Visible = false
+        ImageLabel.Visible = true
+        Twen:Create(ImageLabel,TweenInfo1,{ImageTransparency = 0}):Play()
+    end,
+    
+    SetImageAsset = function(assetId)
+        LoadingLabel.Visible = true
+        ImageLabel.Visible = false
+        
+        local source = assetId
+        if type(source) == "number" then
+            source = "rbxassetid://" .. source
+        elseif not source:match("^rbxassetid://") then
+            source = "rbxassetid://" .. source
+        end
+        
+        ImageLabel.Image = source
+        LoadingLabel.Visible = false
+        ImageLabel.Visible = true
+        Twen:Create(ImageLabel,TweenInfo1,{ImageTransparency = 0}):Play()
+    end,
+    
+    GetImage = function()
+        return ImageLabel.Image
+    end
 };
 end;
 return CollapsibleTable;
@@ -4093,13 +4237,18 @@ end;
 function SectionTable:NewImage(cfg)
 cfg = Config(cfg,{
 ImageId = "rbxassetid://0",
+Image = nil,
+ImageUrl = nil,
 Size = UDim2.new(0.98, 0, 0.5, 0)
 });
+
 local FunctionImage = Instance.new("Frame")
 local UIAspectRatioConstraint = Instance.new("UIAspectRatioConstraint")
 local ImageLabel = Instance.new("ImageLabel")
 local UICorner = Instance.new("UICorner")
 local UIGradient = Instance.new("UIGradient")
+local LoadingLabel = Instance.new("TextLabel")
+
 FunctionImage.Name = "FunctionImage"
 FunctionImage.Parent = Section
 FunctionImage.BackgroundColor3 = Color3.fromRGB(17, 17, 17)
@@ -4108,9 +4257,25 @@ FunctionImage.BorderColor3 = Color3.fromRGB(0, 0, 0)
 FunctionImage.BorderSizePixel = 0
 FunctionImage.Size = cfg.Size
 FunctionImage.ZIndex = 17
+FunctionImage.ClipsDescendants = true
+
 UIAspectRatioConstraint.Parent = FunctionImage
 UIAspectRatioConstraint.AspectRatio = 2.500
 UIAspectRatioConstraint.AspectType = Enum.AspectType.ScaleWithParentSize
+
+LoadingLabel.Name = "LoadingLabel"
+LoadingLabel.Parent = FunctionImage
+LoadingLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+LoadingLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
+LoadingLabel.Size = UDim2.new(0.8, 0, 0.3, 0)
+LoadingLabel.BackgroundTransparency = 1
+LoadingLabel.Font = Enum.Font.GothamBold
+LoadingLabel.Text = "Loading Image..."
+LoadingLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+LoadingLabel.TextScaled = true
+LoadingLabel.Visible = true
+LoadingLabel.ZIndex = 19
+
 ImageLabel.Name = "ImageLabel"
 ImageLabel.Parent = FunctionImage
 ImageLabel.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -4121,22 +4286,145 @@ ImageLabel.BorderSizePixel = 0
 ImageLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
 ImageLabel.Size = UDim2.new(1, 0, 1, 0)
 ImageLabel.ZIndex = 18
-ImageLabel.Image = cfg.ImageId
+ImageLabel.Image = ""
 ImageLabel.ImageTransparency = 1
 ImageLabel.ScaleType = Enum.ScaleType.Fit
-Twen:Create(ImageLabel,TweenInfo1,{ImageTransparency = 0}):Play();
+ImageLabel.Visible = false
+
 UICorner.CornerRadius = UDim.new(0, 2)
 UICorner.Parent = FunctionImage
+
 UIGradient.Rotation = 90
 UIGradient.Transparency = NumberSequence.new{NumberSequenceKeypoint.new(0.00, 0.00), NumberSequenceKeypoint.new(0.75, 0.27), NumberSequenceKeypoint.new(1.00, 1.00)}
 UIGradient.Parent = ImageLabel
+
+local function getImageSource()
+    if cfg.Image then
+        if type(cfg.Image) == "string" then
+            if cfg.Image:match("^rbxassetid://") or cfg.Image:match("^http") then
+                return cfg.Image
+            else
+                return "rbxassetid://" .. cfg.Image
+            end
+        end
+    elseif cfg.ImageUrl then
+        return cfg.ImageUrl
+    elseif cfg.ImageId then
+        if type(cfg.ImageId) == "number" then
+            return "rbxassetid://" .. cfg.ImageId
+        elseif cfg.ImageId:match("^rbxassetid://") then
+            return cfg.ImageId
+        else
+            return "rbxassetid://" .. cfg.ImageId
+        end
+    end
+    return nil
+end
+
+local function downloadImage(url)
+    if url:match("^rbxassetid://") then
+        return url
+    end
+    
+    local filename = "TempImage_" .. tostring(math.random(1000, 9999)) .. "_" .. tick() .. ".png"
+    local filepath = filename
+    local imageAsset = url
+    
+    local httpRequest = syn and syn.request or http_request or request
+    
+    if httpRequest then
+        pcall(function()
+            local response = httpRequest({
+                Url = url,
+                Method = "GET"
+            })
+            
+            if response and response.Body then
+                writefile(filepath, response.Body)
+                imageAsset = getcustomasset(filepath)
+            end
+        end)
+    end
+    
+    return imageAsset
+end
+
+local imageSource = getImageSource()
+if imageSource then
+    LoadingLabel.Visible = true
+    ImageLabel.Visible = false
+    
+    local finalImage = downloadImage(imageSource)
+    
+    ImageLabel.Image = finalImage
+    
+    task.wait(0.1)
+    LoadingLabel.Visible = false
+    ImageLabel.Visible = true
+    
+    Twen:Create(ImageLabel,TweenInfo1,{ImageTransparency = 0}):Play()
+else
+    LoadingLabel.Text = "No Image Source"
+end
+
 return {
-Visible = function(newindx)
-FunctionImage.Visible = newindx
-end,
-SetImage = function(newId)
-ImageLabel.Image = newId
-end,
+    Visible = function(newindx)
+        FunctionImage.Visible = newindx
+    end,
+    
+    SetImage = function(newId, isUrl)
+        LoadingLabel.Visible = true
+        ImageLabel.Visible = false
+        
+        local source = newId
+        if isUrl then
+            source = downloadImage(newId)
+        else
+            if type(source) == "number" then
+                source = "rbxassetid://" .. source
+            elseif not source:match("^rbxassetid://") then
+                source = "rbxassetid://" .. source
+            end
+        end
+        
+        ImageLabel.Image = source
+        LoadingLabel.Visible = false
+        ImageLabel.Visible = true
+        Twen:Create(ImageLabel,TweenInfo1,{ImageTransparency = 0}):Play()
+    end,
+    
+    SetImageUrl = function(url)
+        LoadingLabel.Visible = true
+        ImageLabel.Visible = false
+        
+        local source = downloadImage(url)
+        
+        ImageLabel.Image = source
+        LoadingLabel.Visible = false
+        ImageLabel.Visible = true
+        Twen:Create(ImageLabel,TweenInfo1,{ImageTransparency = 0}):Play()
+    end,
+    
+    SetImageAsset = function(assetId)
+        LoadingLabel.Visible = true
+        ImageLabel.Visible = false
+        
+        local source = assetId
+        if type(source) == "number" then
+            source = "rbxassetid://" .. source
+        elseif not source:match("^rbxassetid://") then
+            source = "rbxassetid://" .. source
+        end
+        
+        ImageLabel.Image = source
+        LoadingLabel.Visible = false
+        ImageLabel.Visible = true
+        Twen:Create(ImageLabel,TweenInfo1,{ImageTransparency = 0}):Play()
+    end,
+    
+    GetImage = function()
+        return ImageLabel.Image
+    end
 };
 end;
 return SectionTable;
@@ -4918,3 +5206,53 @@ return overview;
 end;
 print(' [ DONE <3 ]: Sugar UI LOADED!! YOMKA MODIFIED IT')
 return table.freeze(Library);
+
+
+
+
+
+
+--[[ Play audio when loaded ( optional )
+local SoundService = game:GetService("SoundService")
+
+local success, result = pcall(function()
+    local request = syn and syn.request or http_request or request
+    if not request then
+        return nil
+    end
+    
+    local response = request({
+        Url = "https://github.com/mounsokdara/Blogger-resources/raw/refs/heads/main/audio/Yomka/yoxi%20hub-mc.mp3",
+        Method = "GET",
+        Headers = {
+            ["User-Agent"] = "Roblox/Luau"
+        }
+    })
+    
+    if response and response.StatusCode == 200 then
+        return response.Body
+    else
+        return nil
+    end
+end)
+
+if success and result then
+    local writeSuccess = pcall(function()
+        writefile("YoxiHub.mp3", result)
+    end)
+    
+    if writeSuccess then
+        local sound = Instance.new("Sound")
+        sound.SoundId = getcustomasset("YoxiHub.mp3")
+        sound.Volume = 1
+        sound.Parent = SoundService
+        
+        sound:Play()
+        
+        sound.Stopped:Connect(function()
+            sound:Destroy()
+            pcall(function() delfile("YoxiHub.mp3") end)
+        end)
+    end
+end
+]]
