@@ -4,261 +4,91 @@ local TextServ = game:GetService('TextService');
 local LocalPlayer = game:GetService('Players').LocalPlayer;
 local CoreGui = (gethui and gethui()) or game:FindFirstChild('CoreGui') or LocalPlayer.PlayerGui;
 local Icons = (function()
-    local IconModule = {
-        IconsType = "lucide",
-        New = nil,
-        IconThemeTag = nil,
-        Icons = {
-            ["lucide"] = {},
-            ["craft"] = {},
-            ["geist"] = {},
-            ["sfsymbols"] = {},
-        },
-    }
-    local function safeLoad(url)
-        local success, result = pcall(function()
-            return loadstring(game:HttpGet(url))()
-        end)
-        return success and result or {}
-    end
-    -- Add this after the other service declarations (around line 10-20)
-local MainFrame = {}
-
-function MainFrame.IsMouseOverFrame(Frame: GuiObject, Position: Vector3): boolean
-	local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize
-	return Position.X >= AbsPos.X
-		and Position.X <= AbsPos.X + AbsSize.X
-		and Position.Y >= AbsPos.Y
-		and Position.Y <= AbsPos.Y + AbsSize.Y
-end
-
-function MainFrame.IsClickInput(Input: InputObject): boolean
-	return Input.UserInputState == Enum.UserInputState.Begin
-		and (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch)
-end
-
-function MainFrame.IsMoveInput(Input: InputObject): boolean
-	return Input.UserInputState == Enum.UserInputState.Change
-		and (Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch)
-end
-
-function MainFrame.MakeDraggable(WindowTable, MainFrame, DragFrame)
-	if not WindowTable or not MainFrame or not DragFrame then
-		return WindowTable
-	end
-	
-	local dragging = false
-	local dragStart = nil
-	local startPos = nil
-	local UserInputService = game:GetService("UserInputService")
-	
-	local function updatePosition(input)
-		if not dragging then return end
-		
-		local delta = input.Position - dragStart
-		MainFrame.Position = UDim2.new(
-			startPos.X.Scale, 
-			startPos.X.Offset + delta.X,
-			startPos.Y.Scale, 
-			startPos.Y.Offset + delta.Y
-		)
-		
-		if WindowTable and not WindowTable.WindowToggle then
-			WindowTable.LastPosition = MainFrame.Position
-		end
-		
-		if WindowTable and WindowTable.ElBlurUI and WindowTable.ElBlurUI.Update then
-			WindowTable.ElBlurUI.Update()
-		end
-	end
-	
-	DragFrame.InputBegan:Connect(function(input)
-		if MainFrame.IsClickInput(input) then
-			if MainFrame.IsMouseOverFrame(DragFrame, input.Position) then
-				dragging = true
-				dragStart = input.Position
-				startPos = MainFrame.Position
-				
-				input.Changed:Connect(function()
-					if input.UserInputState == Enum.UserInputState.End then
-						dragging = false
-					end
-				end)
-			end
-		end
-	end)
-	
-	DragFrame.InputChanged:Connect(function(input)
-		if MainFrame.IsMoveInput(input) and dragging then
-			updatePosition(input)
-		end
-	end)
-	
-	UserInputService.InputChanged:Connect(function(input)
-		if MainFrame.IsMoveInput(input) and dragging then
-			updatePosition(input)
-		end
-	end)
-	
-	return WindowTable
-end
-    IconModule.Icons["lucide"] = safeLoad("https://raw.githubusercontent.com/Footagesus/Icons/refs/heads/main/lucide/dist/Icons.lua")
-    IconModule.Icons["craft"] = safeLoad("https://raw.githubusercontent.com/Footagesus/Icons/refs/heads/main/craft/dist/Icons.lua")
-    IconModule.Icons["geist"] = safeLoad("https://raw.githubusercontent.com/Footagesus/Icons/refs/heads/main/geist/dist/Icons.lua")
-    IconModule.Icons["sfsymbols"] = safeLoad("https://raw.githubusercontent.com/Footagesus/Icons/refs/heads/main/sfsymbols/dist/Icons.lua")
-    local function parseIconString(iconString)
-        if type(iconString) == "string" then
-            local splitIndex = iconString:find(":")
-            if splitIndex then
-                local iconType = iconString:sub(1, splitIndex - 1)
-                local iconName = iconString:sub(splitIndex + 1)
-                return iconType, iconName
-            end
-        end
-        return nil, iconString
-    end
-    function IconModule.AddIcons(packName, iconsData)
-        if type(packName) ~= "string" or type(iconsData) ~= "table" then
-            error("AddIcons: packName must be string, iconsData must be table")
-            return
-        end
-        if not IconModule.Icons[packName] then
-            IconModule.Icons[packName] = { Icons = {}, Spritesheets = {} }
-        end
-        for iconName, iconValue in pairs(iconsData) do
-            if type(iconValue) == "number" or (type(iconValue) == "string" and iconValue:match("^rbxassetid://")) then
-                local imageId = type(iconValue) == "number" and "rbxassetid://" .. iconValue or iconValue
-                IconModule.Icons[packName].Icons[iconName] = {
-                    Image = imageId,
-                    ImageRectSize = Vector2.new(0, 0),
-                    ImageRectPosition = Vector2.new(0, 0),
-                    Parts = nil
-                }
-                IconModule.Icons[packName].Spritesheets[imageId] = imageId
-            elseif type(iconValue) == "table" and iconValue.Image then
-                local imageId = type(iconValue.Image) == "number" and "rbxassetid://" .. iconValue.Image or iconValue.Image
-                IconModule.Icons[packName].Icons[iconName] = {
-                    Image = imageId,
-                    ImageRectSize = iconValue.ImageRectSize or Vector2.new(0,0),
-                    ImageRectPosition = iconValue.ImageRectPosition or Vector2.new(0,0),
-                    Parts = iconValue.Parts
-                }
-                IconModule.Icons[packName].Spritesheets[imageId] = imageId
-            end
-        end
-    end
-    function IconModule.SetIconsType(iconType)
-        IconModule.IconsType = iconType
-    end
-    function IconModule.Init(New, IconThemeTag)
-        IconModule.New = New
-        IconModule.IconThemeTag = IconThemeTag
-        return IconModule
-    end
-    function IconModule.Icon(Icon, Type)
-        local iconType, iconName = parseIconString(Icon)
-        local targetType = iconType or Type or IconModule.IconsType
-        local targetName = iconName or Icon
-        local iconSet = IconModule.Icons[targetType]
-        if not iconSet then return nil end
-        if iconSet[targetName] and (type(iconSet[targetName]) == "string" or type(iconSet[targetName]) == "number") then
-            local asset = type(iconSet[targetName]) == "number" and "rbxassetid://" .. iconSet[targetName] or iconSet[targetName]
-            return { asset, { ImageRectSize = Vector2.new(0,0), ImageRectPosition = Vector2.new(0,0), Parts = nil } }
-        end
-        if iconSet.Icons and iconSet.Icons[targetName] then
-            local data = iconSet.Icons[targetName]
-            local imageId = type(data.Image) == "number" and "rbxassetid://" .. data.Image or data.Image
-            return { iconSet.Spritesheets[imageId] or imageId, data }
-        end
-        return nil
-    end
-    function IconModule.Image(IconConfig)
-        IconConfig = IconConfig or {}
-        local Icon = {
-            Icon = IconConfig.Icon or nil,
-            Type = IconConfig.Type,
-            Colors = IconConfig.Colors or { IconModule.IconThemeTag or Color3.new(1,1,1), Color3.new(1,1,1) },
-            Size = IconConfig.Size or UDim2.new(0,24,0,24),
-            IconFrame = nil,
-        }
-        local Colors = {}
-        for i, color in ipairs(Icon.Colors) do
-            Colors[i] = {
-                ThemeTag = typeof(color) == "string" and color,
-                Color = typeof(color) == "Color3" and color,
-            }
-        end
-        local IconLabel = IconModule.Icon(Icon.Icon, Icon.Type)
-        if not IconLabel then
-            local fallback = Instance.new("ImageLabel")
-            fallback.Size = Icon.Size
-            fallback.BackgroundTransparency = 1
-            if typeof(Icon.Icon) == "string" and Icon.Icon:match("^rbxassetid://") then
-                fallback.Image = Icon.Icon
-            end
-            Icon.IconFrame = fallback
-            return Icon
-        end
-        local image = type(IconLabel) == "table" and IconLabel[1] or IconLabel
-        local data = type(IconLabel) == "table" and IconLabel[2] or { ImageRectSize = Vector2.new(0,0), ImageRectPosition = Vector2.new(0,0), Parts = nil }
-        if IconModule.New then
-            local New = IconModule.New
-            local frame = New("ImageLabel", {
-                Size = Icon.Size,
-                BackgroundTransparency = 1,
-                ImageColor3 = Colors[1].Color or nil,
-                ThemeTag = Colors[1].ThemeTag and { ImageColor3 = Colors[1].ThemeTag },
-                Image = image,
-                ImageRectSize = data.ImageRectSize,
-                ImageRectOffset = data.ImageRectPosition,
-            })
-            if data.Parts then
-                for i, partName in ipairs(data.Parts) do
-                    local part = IconModule.Icon(partName, Icon.Type)
-                    if part then
-                        New("ImageLabel", {
-                            Size = UDim2.new(1,0,1,0),
-                            BackgroundTransparency = 1,
-                            ImageColor3 = Colors[1+i].Color or nil,
-                            ThemeTag = Colors[1+i].ThemeTag and { ImageColor3 = Colors[1+i].ThemeTag },
-                            Image = type(part) == "table" and part[1] or part,
-                            ImageRectSize = type(part) == "table" and part[2].ImageRectSize or Vector2.new(0,0),
-                            ImageRectOffset = type(part) == "table" and part[2].ImageRectPosition or Vector2.new(0,0),
-                            Parent = frame,
-                        })
-                    end
-                end
-            end
-            Icon.IconFrame = frame
-        else
-            local frame = Instance.new("ImageLabel")
-            frame.Size = Icon.Size
-            frame.BackgroundTransparency = 1
-            frame.ImageColor3 = Colors[1].Color or Color3.new(1,1,1)
-            frame.Image = image
-            frame.ImageRectSize = data.ImageRectSize
-            frame.ImageRectOffset = data.ImageRectPosition
-            if data.Parts then
-                for i, partName in ipairs(data.Parts) do
-                    local part = IconModule.Icon(partName, Icon.Type)
-                    if part then
-                        local p = Instance.new("ImageLabel")
-                        p.Size = UDim2.new(1,0,1,0)
-                        p.BackgroundTransparency = 1
-                        p.ImageColor3 = Colors[1+i].Color or Color3.new(1,1,1)
-                        p.Image = type(part) == "table" and part[1] or part
-                        p.ImageRectSize = type(part) == "table" and part[2].ImageRectSize or Vector2.new(0,0)
-                        p.ImageRectOffset = type(part) == "table" and part[2].ImageRectPosition or Vector2.new(0,0)
-                        p.Parent = frame
-                    end
-                end
-            end
-            Icon.IconFrame = frame
-        end
-        return Icon
-    end
-    return IconModule
+    -- ... (keep your existing Icons code)
 end)()
+
+-- Add this after Icons
+local DragHandler = {}
+
+function DragHandler.IsMouseOverFrame(Frame: GuiObject, Position: Vector3): boolean
+    local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize
+    return Position.X >= AbsPos.X
+        and Position.X <= AbsPos.X + AbsSize.X
+        and Position.Y >= AbsPos.Y
+        and Position.Y <= AbsPos.Y + AbsSize.Y
+end
+
+function DragHandler.IsClickInput(Input: InputObject): boolean
+    return Input.UserInputState == Enum.UserInputState.Begin
+        and (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch)
+end
+
+function DragHandler.IsMoveInput(Input: InputObject): boolean
+    return Input.UserInputState == Enum.UserInputState.Change
+        and (Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch)
+end
+
+function DragHandler.MakeDraggable(WindowTable, MainFrameObj, DragFrame)
+    if not WindowTable or not MainFrameObj or not DragFrame then
+        return WindowTable
+    end
+    
+    local dragging = false
+    local dragStart = nil
+    local startPos = nil
+    local UserInputService = game:GetService("UserInputService")
+    
+    local function updatePosition(input)
+        if not dragging then return end
+        
+        local delta = input.Position - dragStart
+        MainFrameObj.Position = UDim2.new(
+            startPos.X.Scale, 
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale, 
+            startPos.Y.Offset + delta.Y
+        )
+        
+        if WindowTable and not WindowTable.WindowToggle then
+            WindowTable.LastPosition = MainFrameObj.Position
+        end
+        
+        if WindowTable and WindowTable.ElBlurUI and WindowTable.ElBlurUI.Update then
+            WindowTable.ElBlurUI.Update()
+        end
+    end
+    
+    DragFrame.InputBegan:Connect(function(input)
+        if DragHandler.IsClickInput(input) then
+            if DragHandler.IsMouseOverFrame(DragFrame, input.Position) then
+                dragging = true
+                dragStart = input.Position
+                startPos = MainFrameObj.Position
+                
+                input.Changed:Connect(function()
+                    if input.UserInputState == Enum.UserInputState.End then
+                        dragging = false
+                    end
+                end)
+            end
+        end
+    end)
+    
+    DragFrame.InputChanged:Connect(function(input)
+        if DragHandler.IsMoveInput(input) and dragging then
+            updatePosition(input)
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if DragHandler.IsMoveInput(input) and dragging then
+            updatePosition(input)
+        end
+    end)
+    
+    return WindowTable
+end
+
 Icons.SetIconsType("lucide")
 local ElBlurSource = function()
 local GuiSystem = {}
@@ -833,7 +663,7 @@ InputFrame.BorderSizePixel = 0
 InputFrame.Position = UDim2.new(0, 0, 0, 0)
 InputFrame.Size = UDim2.new(1, 0, 0.12, 0) 
 InputFrame.ZIndex = 15;
-MainFrame.MakeDraggable(WindowTable, MainFrame, InputFrame)
+DragHandler.MakeDraggable(WindowTable, MainFrame, InputFrame)
 local function updatePosition(input)
 	if not dragging then return end
 	
