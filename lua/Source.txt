@@ -188,91 +188,6 @@ return string.reverse(string.gsub(game:GetService('HttpService'):GenerateGUID(fa
 return string.reverse(aa)
 end))
 end
--- Drag System Module
-local DragSystem = (function()
-    local drag = {}
-    
-    function drag.IsMouseOverFrame(Frame: GuiObject, Position: Vector3): boolean
-        local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize
-        return Position.X >= AbsPos.X
-            and Position.X <= AbsPos.X + AbsSize.X
-            and Position.Y >= AbsPos.Y
-            and Position.Y <= AbsPos.Y + AbsSize.Y
-    end
-    
-    function drag.IsClickInput(Input: InputObject): boolean
-        return Input.UserInputState == Enum.UserInputState.Begin
-            and (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch)
-    end
-    
-    function drag.IsMoveInput(Input: InputObject): boolean
-        return Input.UserInputState == Enum.UserInputState.Change
-            and (Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch)
-    end
-    
-    function drag.MakeDraggable(WindowTable, dragFrame, DragFrame)
-        if not WindowTable or not dragFrame or not DragFrame then
-            return WindowTable
-        end
-        
-        local dragging = false
-        local dragStart = nil
-        local startPos = nil
-        local UserInputService = game:GetService("UserInputService")
-        
-        local function updatePosition(input)
-            if not dragging then return end
-            
-            local delta = input.Position - dragStart
-            dragFrame.Position = UDim2.new(
-                startPos.X.Scale, 
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale, 
-                startPos.Y.Offset + delta.Y
-            )
-            
-            if WindowTable and not WindowTable.WindowToggle then
-                WindowTable.LastPosition = dragFrame.Position
-            end
-            
-            if WindowTable and WindowTable.ElBlurUI and WindowTable.ElBlurUI.Update then
-                WindowTable.ElBlurUI.Update()
-            end
-        end
-        
-        DragFrame.InputBegan:Connect(function(input)
-            if drag.IsClickInput(input) then
-                if drag.IsMouseOverFrame(DragFrame, input.Position) then
-                    dragging = true
-                    dragStart = input.Position
-                    startPos = dragFrame.Position
-                    
-                    input.Changed:Connect(function()
-                        if input.UserInputState == Enum.UserInputState.End then
-                            dragging = false
-                        end
-                    end)
-                end
-            end
-        end)
-        
-        DragFrame.InputChanged:Connect(function(input)
-            if drag.IsMoveInput(input) and dragging then
-                updatePosition(input)
-            end
-        end)
-        
-        UserInputService.InputChanged:Connect(function(input)
-            if drag.IsMoveInput(input) and dragging then
-                updatePosition(input)
-            end
-        end)
-        
-        return WindowTable
-    end
-    
-    return drag
-end)()
 local function Hiter(planePos, planeNormal, rayOrigin, rayDirection)
 local n = planeNormal
 local d = rayDirection
@@ -4159,7 +4074,53 @@ end;
 
 
 
-DragSystem.MakeDraggable(WindowTable, MainFrame, InputFrame)
+local dragging = false
+local dragStart = nil
+local startPos = nil
+
+local function updatePosition(input)
+    if not dragging then return end
+    local delta = input.Position - dragStart
+    MainFrame.Position = UDim2.new(
+        startPos.X.Scale, 
+        startPos.X.Offset + delta.X,
+        startPos.Y.Scale, 
+        startPos.Y.Offset + delta.Y
+    )
+    WindowTable.LastPosition = MainFrame.Position
+    if WindowTable.ElBlurUI and WindowTable.ElBlurUI.Update then
+        WindowTable.ElBlurUI.Update()
+    end
+end
+
+InputFrame.InputBegan:Connect(function(input)
+    if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+InputFrame.InputChanged:Connect(function(input)
+    if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        if dragging then
+            updatePosition(input)
+        end
+    end
+end)
+
+Input.InputChanged:Connect(function(input)
+    if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        if dragging then
+            updatePosition(input)
+        end
+    end
+end)
 
 
 WindowTable.SetKeybind = function(newKey)
