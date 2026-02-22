@@ -429,10 +429,10 @@ return str
 end;
 function Library.new(config)
 config = Config(config,{
-Title = "",
-Description = "",
+Title = "Title",
+Description = "Description",
 Keybind = Enum.KeyCode.LeftControl,
-Logo = "",
+Logo = "rbxassetid://0",
 Size = UDim2.new(0.100000001, 445, 0.100000001, 315),
 ConfigFolder = ""
 });
