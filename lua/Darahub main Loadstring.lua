@@ -1,1 +1,1 @@
-loadstring(game:HttpGet("https://darahub.dev.pages/main.lua"))()
+loadstring(game:HttpGet("https://darahub.pages.dev/main.lua"))()
