@@ -6734,7 +6734,7 @@ ai:Set(ak,false,ah.Window.NewElements)
 if ah.Window.NewElements and am.Animate then
 if ai.Type=="Toggle"then
 aa.AddSignal(al.ToggleFrame.Hitbox.InputBegan,function(an)
-if not ah.Window.IsToggleDragging and an.UserInputType==Enum.UserInputType.MouseButton1 or an.UserInputType==Enum.UserInputType.Touch then
+if not ah.Window.IsToggleDragging and an.UserInputType == Enum.UserInputType.MouseButton1 then
 am:Animate(an,ai)
 end
 end)
