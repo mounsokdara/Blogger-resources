@@ -6515,66 +6515,52 @@ end)
 end
 
 function am.Animate(av,aw,ax)
-if not al.Window.IsToggleDragging then
-al.Window.IsToggleDragging=true
-
-local ay=aw.Position.X
-local aA=aq.Frame.Position.X.Offset
-local aB=false
-local b=false
-
-ad(aq.Frame.Bar.UIScale,0.28,{Scale=1.5},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-ad(aq.Frame.Bar.Highlight.BarOverlay,0.28,{ImageTransparency=.86},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-
-local dragCleanup = DraggingXPosToggle.MakeDraggable(aq.Frame, aw, {
-    OnDragUpdate = function(position, dragDistance)
-        if aB then return end
+    if not al.Window.IsToggleDragging then
+        al.Window.IsToggleDragging = true
         
-        local g = position.X.Offset - aA
-        local h = math.max(2, math.min(aA + g, au - at - 2))
-        local j = math.clamp((h - 2) / (au - at - 4), 0, 1)
+        local aA = aq.Frame.Position.X.Offset
         
-        local l, m, p = am:GetGlassFrame(j)
-        aq.Frame.Bar.Highlight.Glass.Image = l
-        aq.Frame.Bar.Highlight.Glass.ImageRectSize = m
-        aq.Frame.Bar.Highlight.Glass.ImageRectOffset = p
-    end,
-    
-    OnDragStart = function()
-        aB = true
-    end,
-    
-    OnDragEnd = function(position, wasDragged)
-        if not b and not wasDragged then
-            ax:Set(not ax.Value, true, false)
-        elseif wasDragged then
-            local f = position.X.Offset
-            local g = f + at / 2
-            local h = g > au / 2
-            ax:Set(h, true, false)
-        end
+        ad(aq.Frame.Bar.UIScale,0.28,{Scale=1.5},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+        ad(aq.Frame.Bar.Highlight.BarOverlay,0.28,{ImageTransparency=.86},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
         
-        ad(aq.Frame.Bar.UIScale,0.23,{Scale=1},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-        ad(aq.Frame.Bar.Highlight.BarOverlay,0.23,{ImageTransparency=0},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-        
-        al.Window.IsToggleDragging = false
-        aB = false
-        b = false
-        
-        if dragCleanup then
-            dragCleanup()
-        end
-    end,
-    
-    OnClick = function()
-        ax:Set(not ax.Value, true, false)
-        al.Window.IsToggleDragging = false
+        local dragCleanup = DraggingXPosToggle.MakeDraggable(aq.Frame, aw, {
+            OnDragUpdate = function(position, dragDistance)
+                local g = position.X.Offset - aA
+                local h = math.max(2, math.min(aA + g, au - at - 2))
+                local j = math.clamp((h - 2) / (au - at - 4), 0, 1)
+                
+                local l, m, p = am:GetGlassFrame(j)
+                aq.Frame.Bar.Highlight.Glass.Image = l
+                aq.Frame.Bar.Highlight.Glass.ImageRectSize = m
+                aq.Frame.Bar.Highlight.Glass.ImageRectOffset = p
+            end,
+            
+            OnDragEnd = function(position, wasDragged)
+                if wasDragged then
+                    local f = position.X.Offset
+                    local g = f + at / 2
+                    local h = g > au / 2
+                    ax:Set(h, true, false)
+                else
+                    ax:Set(not ax.Value, true, false)
+                end
+                
+                ad(aq.Frame.Bar.UIScale,0.23,{Scale=1},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+                ad(aq.Frame.Bar.Highlight.BarOverlay,0.23,{ImageTransparency=0},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+                
+                al.Window.IsToggleDragging = false
+                
+                if dragCleanup then
+                    dragCleanup()
+                end
+            end,
+            
+            OnClick = function()
+                ax:Set(not ax.Value, true, false)
+                al.Window.IsToggleDragging = false
+            end
+        })
     end
-})
-
-b = true
-
-end
 end
 
 return ap,am
