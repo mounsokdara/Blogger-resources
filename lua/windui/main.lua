@@ -6827,12 +6827,6 @@ function af.New(aj,ak)
             if al.IsDragging then return end
             al.IsDragging=true
             ak.Window.IsToggleDragging=true
-            if as and as:FindFirstChild("UIScale") then
-                ac(as.UIScale,0.28,{Scale=1.5},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-            end
-            if as and as:FindFirstChild("Highlight") and as.Highlight:FindFirstChild("BarOverlay") then
-                ac(as.Highlight.BarOverlay,0.28,{ImageTransparency=.86},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-            end
         end,
         OnDragUpdate=function(position,dragDistance)
             if not al.IsDragging then return end
@@ -6860,24 +6854,13 @@ function af.New(aj,ak)
         end,
         OnDragEnd=function(position,wasDragged)
             if not al.IsDragging then return end
-            if wasDragged then
-                local finalValue=an
-                if ap and ap.Set then
-                    ap:Set(finalValue,true,false)
-                end
-            else
+            if not wasDragged then
                 if ap and ap.Set then
                     ap:Set(not an,true,false)
                     an=not an
                     al.Value=an
                     aa.SafeCallback(al.Callback,an)
                 end
-            end
-            if as and as:FindFirstChild("UIScale") then
-                ac(as.UIScale,0.23,{Scale=1},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-            end
-            if as and as:FindFirstChild("Highlight") and as.Highlight:FindFirstChild("BarOverlay") then
-                ac(as.Highlight.BarOverlay,0.23,{ImageTransparency=0},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
             end
             al.IsDragging=false
             ak.Window.IsToggleDragging=false
