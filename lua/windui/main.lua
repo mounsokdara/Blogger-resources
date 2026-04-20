@@ -6518,123 +6518,76 @@ end
 function am.Animate(av, aw, ax)
     if not al.Window.IsToggleDragging then
         al.Window.IsToggleDragging = true
-        
         local dragStartX = aw.Position.X
         local dragStartY = aw.Position.Y
         local initialOffset = aq.Frame.Position.X.Offset
-        local dragThresholdReached = false
-        local hasMovedEnough = false
+        local hasMovedPastThreshold = false
+        local hasStartedDragging = false
         local DRAG_THRESHOLD = 8
+        local dragDistance = 0
         local currentTouch = nil
-        
-        -- Visual feedback animations
         ad(aq.Frame.Bar.UIScale, 0.28, {Scale = 1.5}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
         ad(aq.Frame.Bar.Highlight.BarOverlay, 0.28, {ImageTransparency = 0.86}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
-        
-        -- Clean up existing connections
+        local function GetDistance(pos1X, pos1Y, pos2X, pos2Y)
+            return math.sqrt((pos2X - pos1X)^2 + (pos2Y - pos1Y)^2)
+        end
+        local function IsOverToggleFrame(position)
+            if not aq.Frame or not position then return false end
+            local absPos = aq.Frame.AbsolutePosition
+            local absSize = aq.Frame.AbsoluteSize
+            return position.X >= absPos.X and position.X <= absPos.X + absSize.X
+               and position.Y >= absPos.Y and position.Y <= absPos.Y + absSize.Y
+        end
         if ar then ar:Disconnect() end
-        if as then as:Disconnect() end
-        
-        -- Track if this is a touch input
-        if aw.UserInputType == Enum.UserInputType.Touch then
-            currentTouch = aw
-        end
-        
-        -- Helper function to calculate drag distance
-        local function GetDragDistance(currentX, currentY)
-            return math.sqrt((currentX - dragStartX)^2 + (currentY - dragStartY)^2)
-        end
-        
-        -- Helper function to check if input is valid for this drag session
-        local function IsValidMovementInput(d)
-            if d.UserInputType ~= Enum.UserInputType.MouseMovement and 
-               d.UserInputType ~= Enum.UserInputType.Touch then
-                return false
-            end
-            if currentTouch and d ~= currentTouch then
-                return false
-            end
-            return true
-        end
-        
-        -- Helper function to check if input ends the drag session
-        local function IsValidEndInput(d)
-            if d.UserInputType == Enum.UserInputType.MouseButton1 then
-                return true
-            end
-            if currentTouch and d == currentTouch and d.UserInputType == Enum.UserInputType.Touch then
-                return true
-            end
-            return false
-        end
-        
-        -- Movement handler
         ar = ae.InputChanged:Connect(function(d)
             if not al.Window.IsToggleDragging then return end
-            if not IsValidMovementInput(d) then return end
-            if dragThresholdReached then return end
-            
-            local deltaX = d.Position.X - dragStartX
-            local distance = GetDragDistance(d.Position.X, d.Position.Y)
-            
-            -- Check if drag threshold has been exceeded
-            if not hasMovedEnough and distance > DRAG_THRESHOLD then
-                hasMovedEnough = true
+            if d.UserInputType ~= Enum.UserInputType.MouseMovement and d.UserInputType ~= Enum.UserInputType.Touch then return end
+            if hasMovedPastThreshold then return end
+            local currentX = d.Position.X
+            local currentY = d.Position.Y
+            dragDistance = GetDistance(dragStartX, dragStartY, currentX, currentY)
+            local deltaX = math.abs(currentX - dragStartX)
+            local deltaY = math.abs(currentY - dragStartY)
+            if not hasStartedDragging and (deltaX > DRAG_THRESHOLD or deltaY > DRAG_THRESHOLD) then
+                hasStartedDragging = true
             end
-            
-            -- Calculate new position
-            local newOffset = math.max(2, math.min(initialOffset + deltaX, au - at - 2))
-            
-            -- Calculate progress (0 to 1)
+            if not hasStartedDragging then return end
+            local moveDeltaX = currentX - dragStartX
+            local newOffset = math.max(2, math.min(initialOffset + moveDeltaX, au - at - 2))
             local progress = math.clamp((newOffset - 2) / (au - at - 4), 0, 1)
-            
-            -- Update glass frame based on progress
             local glassImage, glassSize, glassOffset = am:GetGlassFrame(progress)
             aq.Frame.Bar.Highlight.Glass.Image = glassImage
             aq.Frame.Bar.Highlight.Glass.ImageRectSize = glassSize
             aq.Frame.Bar.Highlight.Glass.ImageRectOffset = glassOffset
-            
-            -- Animate the toggle frame position
             ad(aq.Frame, 0.12, {
                 Position = UDim2.new(0, newOffset, 0.5, 0)
             }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
         end)
-        
-        -- End drag handler
+        if as then as:Disconnect() end
         as = ae.InputEnded:Connect(function(d)
             if not al.Window.IsToggleDragging then return end
-            if not IsValidEndInput(d) then return end
-            
+            local isValidEnd = d.UserInputType == Enum.UserInputType.MouseButton1 
+                            or d.UserInputType == Enum.UserInputType.Touch
+            if not isValidEnd then return end
             al.Window.IsToggleDragging = false
-            
-            -- Clean up connections
             if ar then ar:Disconnect(); ar = nil end
             if as then as:Disconnect(); as = nil end
-            
-            -- Determine the final state based on drag behavior
-            if dragThresholdReached then
-                -- Drag was cancelled or interfered with
+            if hasMovedPastThreshold then
                 return
             end
-            
-            if not hasMovedEnough then
-                -- No significant movement - treat as click
+            if not hasStartedDragging then
                 ax:Set(not ax.Value, true, false)
             else
-                -- Significant movement - determine final position
-                local currentOffset = aq.Frame.Position.X.Offset
-                local centerPosition = currentOffset + (at / 2)
-                local isToggledOn = centerPosition > (au / 2)
+                local finalOffset = aq.Frame.Position.X.Offset
+                local centerPosition = finalOffset + at / 2
+                local isToggledOn = centerPosition > au / 2
                 ax:Set(isToggledOn, true, false)
             end
-            
-            -- Reset visual effects
             ad(aq.Frame.Bar.UIScale, 0.23, {Scale = 1}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
             ad(aq.Frame.Bar.Highlight.BarOverlay, 0.23, {ImageTransparency = 0}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
         end)
-    end -- Close the if statement
-end -- Close the function
-
+    end
+end
 return ap, am
 return aa end function a.F()
 local aa={}
