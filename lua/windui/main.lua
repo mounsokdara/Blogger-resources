@@ -18,7 +18,7 @@ local a a={cache={}, load=function(b)if not a.cache[b]then a.cache[b]={c=a[b]()}
 
 local d=b(game:GetService"ReplicatedStorage":WaitForChild("GetIcons",99999):InvokeServer())
 
-local function parseIconString(e)
+function parseIconString(e)
 if type(e)=="string"then
 local f=e:find":"
 if f then
@@ -594,7 +594,7 @@ end
 end
 
 function p.GetThemeProperty(r,u)
-local function getValue(v,x)
+function getValue(v,x)
 local z=x[v]
 
 if z==nil then
@@ -697,7 +697,7 @@ return v
 end
 
 function p.UpdateTheme(r,u,v,x,z,A)
-local function ApplyTheme(B)
+function ApplyTheme(B)
 for C,F in pairs(B.Properties or{})do
 local G=p.GetThemeProperty(F,p.Theme)
 if G~=nil then
@@ -895,11 +895,11 @@ return f:Create(r,TweenInfo.new(u,...),v)
 end
 
 function p.NewRoundFrame(r,u,v,x,z,A)
-local function getImageForType(B)
+function getImageForType(B)
 return p.Shapes[B]
 end
 
-local function getSliceCenterForType(B)
+function getSliceCenterForType(B)
 return not table.find({"Shadow-sm","Glass-0.7","Glass-1","Glass-1.4"},B)
 and Rect.new(256,256,256,256)
 or Rect.new(512,512,512,512)
@@ -920,7 +920,7 @@ B[C]=F
 end
 end
 
-local function UpdateSliceScale(C)
+function UpdateSliceScale(C)
 local F=not table.find({"Shadow-sm","Glass-0.7","Glass-1","Glass-1.4"},u)
 and(C/(256))
 or(C/512)
@@ -1666,7 +1666,7 @@ return f end function a.f()
 
 
 
-local b=4294967296;local d=b-1;local function c(e,f)local g,h=0,1;while e~=0 or f~=0 do local j,l=e%2,f%2;local m=(j+l)%2;g=g+m*h;e=math.floor(e/2)f=math.floor(f/2)h=h*2 end;return g%b end;local function k(e,f,g,...)local h;if f then e=e%b;f=f%b;h=c(e,f)if g then h=k(h,g,...)end;return h elseif e then return e%b else return 0 end end;local function n(e,f,g,...)local h;if f then e=e%b;f=f%b;h=(e+f-c(e,f))/2;if g then h=n(h,g,...)end;return h elseif e then return e%b else return d end end;local function o(e)return d-e end;local function q(e,f)if f<0 then return lshift(e,-f)end;return math.floor(e%4294967296/2^f)end;local function s(e,f)if f>31 or f<-31 then return 0 end;return q(e%b,f)end;local function lshift(e,f)if f<0 then return s(e,-f)end;return e*2^f%4294967296 end;local function t(e,f)e=e%b;f=f%32;local g=n(e,2^f-1)return s(e,f)+lshift(g,32-f)end;local e={0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2}local function w(f)return string.gsub(f,".",function(g)return string.format("%02x",string.byte(g))end)end;local function y(f,g)local h=""for j=1,g do local l=f%256;h=string.char(l)..h;f=(f-l)/256 end;return h end;local function D(f,g)local h=0;for j=g,g+3 do h=h*256+string.byte(f,j)end;return h end;local function E(f,g)local h=64-(g+9)%64;g=y(8*g,8)f=f.."\128"..string.rep("\0",h)..g;assert(#f%64==0)return f end;local function I(f)f[1]=0x6a09e667;f[2]=0xbb67ae85;f[3]=0x3c6ef372;f[4]=0xa54ff53a;f[5]=0x510e527f;f[6]=0x9b05688c;f[7]=0x1f83d9ab;f[8]=0x5be0cd19;return f end;local function K(f,g,h)local j={}for l=1,16 do j[l]=D(f,g+(l-1)*4)end;for l=17,64 do local m=j[l-15]local p=k(t(m,7),t(m,18),s(m,3))m=j[l-2]j[l]=(j[l-16]+p+j[l-7]+k(t(m,17),t(m,19),s(m,10)))%b end;local l,m,p,r,u,v,x,z=h[1],h[2],h[3],h[4],h[5],h[6],h[7],h[8]for A=1,64 do local B=k(t(l,2),t(l,13),t(l,22))local C=k(n(l,m),n(l,p),n(m,p))local F=(B+C)%b;local G=k(t(u,6),t(u,11),t(u,25))local H=k(n(u,v),n(o(u),x))local J=(z+G+H+e[A]+j[A])%b;z=x;x=v;v=u;u=(r+J)%b;r=p;p=m;m=l;l=(J+F)%b end;h[1]=(h[1]+l)%b;h[2]=(h[2]+m)%b;h[3]=(h[3]+p)%b;h[4]=(h[4]+r)%b;h[5]=(h[5]+u)%b;h[6]=(h[6]+v)%b;h[7]=(h[7]+x)%b;h[8]=(h[8]+z)%b end;local function Z(f)f=E(f,#f)local g=I{}for h=1,#f,64 do K(f,h,g)end;return w(y(g[1],4)..y(g[2],4)..y(g[3],4)..y(g[4],4)..y(g[5],4)..y(g[6],4)..y(g[7],4)..y(g[8],4))end;local f;local g={["\\"]="\\",["\""]="\"",["\b"]="b",["\f"]="f",["\n"]="n",["\r"]="r",["\t"]="t"}local h={["/"]="/"}for j,l in pairs(g)do h[l]=j end;local j=function(j)return"\\"..(g[j]or string.format("u%04x",j:byte()))end;local l=function(l)return"null"end;local m=function(m,p)local r={}p=p or{}if p[m]then error"circular reference"end;p[m]=true;if rawget(m,1)~=nil or next(m)==nil then local u=0;for v in pairs(m)do if type(v)~="number"then error"invalid table: mixed or invalid key types"end;u=u+1 end;if u~=#m then error"invalid table: sparse array"end;for v,x in ipairs(m)do table.insert(r,f(x,p))end;p[m]=nil;return"["..table.concat(r,",").."]"else for u,v in pairs(m)do if type(u)~="string"then error"invalid table: mixed or invalid key types"end;table.insert(r,f(u,p)..":"..f(v,p))end;p[m]=nil;return"{"..table.concat(r,",").."}"end end;local p=function(p)return'"'..p:gsub('[%z\1-\31\\"]',j)..'"'end;local r=function(r)if r~=r or r<=-math.huge or r>=math.huge then error("unexpected number value '"..tostring(r).."'")end;return string.format("%.14g",r)end;local u={["nil"]=l,table=m,string=p,number=r,boolean=tostring}f=function(v,x)local z=type(v)local A=u[z]if A then return A(v,x)end;error("unexpected type '"..z.."'")end;local v=function(v)return f(v)end;local x;local z=function(...)local z={}for A=1,select("#",...)do z[select(A,...)]=true end;return z end;local A=z(" ","\t","\r","\n")local B=z(" ","\t","\r","\n","]","}",",")local C=z("\\","/",'"',"b","f","n","r","t","u")local F=z("true","false","null")local G={["true"]=true,["false"]=false,null=nil}local H=function(H,J,L,M)for N=J,#H do if L[H:sub(N,N)]~=M then return N end end;return#H+1 end;local J=function(J,L,M)local N=1;local O=1;for P=1,L-1 do O=O+1;if J:sub(P,P)=="\n"then N=N+1;O=1 end end;error(string.format("%s at line %d col %d",M,N,O))end;local L=function(L)local M=math.floor;if L<=0x7f then return string.char(L)elseif L<=0x7ff then return string.char(M(L/64)+192,L%64+128)elseif L<=0xffff then return string.char(M(L/4096)+224,M(L%4096/64)+128,L%64+128)elseif L<=0x10ffff then return string.char(M(L/262144)+240,M(L%262144/4096)+128,M(L%4096/64)+128,L%64+128)end;error(string.format("invalid unicode codepoint '%x'",L))end;local M=function(M)local N=tonumber(M:sub(1,4),16)local O=tonumber(M:sub(7,10),16)if O then return L((N-0xd800)*0x400+O-0xdc00+0x10000)else return L(N)end end;local N=function(N,O)local P=""local Q=O+1;local R=Q;while Q<=#N do local S=N:byte(Q)if S<32 then J(N,Q,"control character in string")elseif S==92 then P=P..N:sub(R,Q-1)Q=Q+1;local T=N:sub(Q,Q)if T=="u"then local U=N:match("^[dD][89aAbB]%x%x\\u%x%x%x%x",Q+1)or N:match("^%x%x%x%x",Q+1)or J(N,Q-1,"invalid unicode escape in string")P=P..M(U)Q=Q+#U else if not C[T]then J(N,Q-1,"invalid escape char '"..T.."' in string")end;P=P..h[T]end;R=Q+1 elseif S==34 then P=P..N:sub(R,Q-1)return P,Q+1 end;Q=Q+1 end;J(N,O,"expected closing quote for string")end;local O=function(O,P)local Q=H(O,P,B)local R=O:sub(P,Q-1)local S=tonumber(R)if not S then J(O,P,"invalid number '"..R.."'")end;return S,Q end;local P=function(P,Q)local R=H(P,Q,B)local S=P:sub(Q,R-1)if not F[S]then J(P,Q,"invalid literal '"..S.."'")end;return G[S],R end;local Q=function(Q,R)local S={}local T=1;R=R+1;while 1 do local U;R=H(Q,R,A,true)if Q:sub(R,R)=="]"then R=R+1;break end;U,R=x(Q,R)S[T]=U;T=T+1;R=H(Q,R,A,true)local V=Q:sub(R,R)R=R+1;if V=="]"then break end;if V~=","then J(Q,R,"expected ']' or ','")end end;return S,R end;local R=function(R,S)local T={}S=S+1;while 1 do local U,V;S=H(R,S,A,true)if R:sub(S,S)=="}"then S=S+1;break end;if R:sub(S,S)~='"'then J(R,S,"expected string for key")end;U,S=x(R,S)S=H(R,S,A,true)if R:sub(S,S)~=":"then J(R,S,"expected ':' after key")end;S=H(R,S+1,A,true)V,S=x(R,S)T[U]=V;S=H(R,S,A,true)local W=R:sub(S,S)S=S+1;if W=="}"then break end;if W~=","then J(R,S,"expected '}' or ','")end end;return T,S end;local S={['"']=N,["0"]=O,["1"]=O,["2"]=O,["3"]=O,["4"]=O,["5"]=O,["6"]=O,["7"]=O,["8"]=O,["9"]=O,["-"]=O,t=P,f=P,n=P,["["]=Q,["{"]=R}x=function(T,U)local V=T:sub(U,U)local W=S[V]if W then return W(T,U)end;J(T,U,"unexpected character '"..V.."'")end;local T=function(T)if type(T)~="string"then error("expected argument of type string, got "..type(T))end;local U,V=x(T,H(T,1,A,true))V=H(T,V,A,true)if V<=#T then J(T,V,"trailing garbage")end;return U end;
+local b=4294967296;local d=b-1;function c(e,f)local g,h=0,1;while e~=0 or f~=0 do local j,l=e%2,f%2;local m=(j+l)%2;g=g+m*h;e=math.floor(e/2)f=math.floor(f/2)h=h*2 end;return g%b end;function k(e,f,g,...)local h;if f then e=e%b;f=f%b;h=c(e,f)if g then h=k(h,g,...)end;return h elseif e then return e%b else return 0 end end;function n(e,f,g,...)local h;if f then e=e%b;f=f%b;h=(e+f-c(e,f))/2;if g then h=n(h,g,...)end;return h elseif e then return e%b else return d end end;function o(e)return d-e end;function q(e,f)if f<0 then return lshift(e,-f)end;return math.floor(e%4294967296/2^f)end;function s(e,f)if f>31 or f<-31 then return 0 end;return q(e%b,f)end;function lshift(e,f)if f<0 then return s(e,-f)end;return e*2^f%4294967296 end;function t(e,f)e=e%b;f=f%32;local g=n(e,2^f-1)return s(e,f)+lshift(g,32-f)end;local e={0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2}function w(f)return string.gsub(f,".",function(g)return string.format("%02x",string.byte(g))end)end;function y(f,g)local h=""for j=1,g do local l=f%256;h=string.char(l)..h;f=(f-l)/256 end;return h end;function D(f,g)local h=0;for j=g,g+3 do h=h*256+string.byte(f,j)end;return h end;function E(f,g)local h=64-(g+9)%64;g=y(8*g,8)f=f.."\128"..string.rep("\0",h)..g;assert(#f%64==0)return f end;function I(f)f[1]=0x6a09e667;f[2]=0xbb67ae85;f[3]=0x3c6ef372;f[4]=0xa54ff53a;f[5]=0x510e527f;f[6]=0x9b05688c;f[7]=0x1f83d9ab;f[8]=0x5be0cd19;return f end;function K(f,g,h)local j={}for l=1,16 do j[l]=D(f,g+(l-1)*4)end;for l=17,64 do local m=j[l-15]local p=k(t(m,7),t(m,18),s(m,3))m=j[l-2]j[l]=(j[l-16]+p+j[l-7]+k(t(m,17),t(m,19),s(m,10)))%b end;local l,m,p,r,u,v,x,z=h[1],h[2],h[3],h[4],h[5],h[6],h[7],h[8]for A=1,64 do local B=k(t(l,2),t(l,13),t(l,22))local C=k(n(l,m),n(l,p),n(m,p))local F=(B+C)%b;local G=k(t(u,6),t(u,11),t(u,25))local H=k(n(u,v),n(o(u),x))local J=(z+G+H+e[A]+j[A])%b;z=x;x=v;v=u;u=(r+J)%b;r=p;p=m;m=l;l=(J+F)%b end;h[1]=(h[1]+l)%b;h[2]=(h[2]+m)%b;h[3]=(h[3]+p)%b;h[4]=(h[4]+r)%b;h[5]=(h[5]+u)%b;h[6]=(h[6]+v)%b;h[7]=(h[7]+x)%b;h[8]=(h[8]+z)%b end;function Z(f)f=E(f,#f)local g=I{}for h=1,#f,64 do K(f,h,g)end;return w(y(g[1],4)..y(g[2],4)..y(g[3],4)..y(g[4],4)..y(g[5],4)..y(g[6],4)..y(g[7],4)..y(g[8],4))end;local f;local g={["\\"]="\\",["\""]="\"",["\b"]="b",["\f"]="f",["\n"]="n",["\r"]="r",["\t"]="t"}local h={["/"]="/"}for j,l in pairs(g)do h[l]=j end;local j=function(j)return"\\"..(g[j]or string.format("u%04x",j:byte()))end;local l=function(l)return"null"end;local m=function(m,p)local r={}p=p or{}if p[m]then error"circular reference"end;p[m]=true;if rawget(m,1)~=nil or next(m)==nil then local u=0;for v in pairs(m)do if type(v)~="number"then error"invalid table: mixed or invalid key types"end;u=u+1 end;if u~=#m then error"invalid table: sparse array"end;for v,x in ipairs(m)do table.insert(r,f(x,p))end;p[m]=nil;return"["..table.concat(r,",").."]"else for u,v in pairs(m)do if type(u)~="string"then error"invalid table: mixed or invalid key types"end;table.insert(r,f(u,p)..":"..f(v,p))end;p[m]=nil;return"{"..table.concat(r,",").."}"end end;local p=function(p)return'"'..p:gsub('[%z\1-\31\\"]',j)..'"'end;local r=function(r)if r~=r or r<=-math.huge or r>=math.huge then error("unexpected number value '"..tostring(r).."'")end;return string.format("%.14g",r)end;local u={["nil"]=l,table=m,string=p,number=r,boolean=tostring}f=function(v,x)local z=type(v)local A=u[z]if A then return A(v,x)end;error("unexpected type '"..z.."'")end;local v=function(v)return f(v)end;local x;local z=function(...)local z={}for A=1,select("#",...)do z[select(A,...)]=true end;return z end;local A=z(" ","\t","\r","\n")local B=z(" ","\t","\r","\n","]","}",",")local C=z("\\","/",'"',"b","f","n","r","t","u")local F=z("true","false","null")local G={["true"]=true,["false"]=false,null=nil}local H=function(H,J,L,M)for N=J,#H do if L[H:sub(N,N)]~=M then return N end end;return#H+1 end;local J=function(J,L,M)local N=1;local O=1;for P=1,L-1 do O=O+1;if J:sub(P,P)=="\n"then N=N+1;O=1 end end;error(string.format("%s at line %d col %d",M,N,O))end;local L=function(L)local M=math.floor;if L<=0x7f then return string.char(L)elseif L<=0x7ff then return string.char(M(L/64)+192,L%64+128)elseif L<=0xffff then return string.char(M(L/4096)+224,M(L%4096/64)+128,L%64+128)elseif L<=0x10ffff then return string.char(M(L/262144)+240,M(L%262144/4096)+128,M(L%4096/64)+128,L%64+128)end;error(string.format("invalid unicode codepoint '%x'",L))end;local M=function(M)local N=tonumber(M:sub(1,4),16)local O=tonumber(M:sub(7,10),16)if O then return L((N-0xd800)*0x400+O-0xdc00+0x10000)else return L(N)end end;local N=function(N,O)local P=""local Q=O+1;local R=Q;while Q<=#N do local S=N:byte(Q)if S<32 then J(N,Q,"control character in string")elseif S==92 then P=P..N:sub(R,Q-1)Q=Q+1;local T=N:sub(Q,Q)if T=="u"then local U=N:match("^[dD][89aAbB]%x%x\\u%x%x%x%x",Q+1)or N:match("^%x%x%x%x",Q+1)or J(N,Q-1,"invalid unicode escape in string")P=P..M(U)Q=Q+#U else if not C[T]then J(N,Q-1,"invalid escape char '"..T.."' in string")end;P=P..h[T]end;R=Q+1 elseif S==34 then P=P..N:sub(R,Q-1)return P,Q+1 end;Q=Q+1 end;J(N,O,"expected closing quote for string")end;local O=function(O,P)local Q=H(O,P,B)local R=O:sub(P,Q-1)local S=tonumber(R)if not S then J(O,P,"invalid number '"..R.."'")end;return S,Q end;local P=function(P,Q)local R=H(P,Q,B)local S=P:sub(Q,R-1)if not F[S]then J(P,Q,"invalid literal '"..S.."'")end;return G[S],R end;local Q=function(Q,R)local S={}local T=1;R=R+1;while 1 do local U;R=H(Q,R,A,true)if Q:sub(R,R)=="]"then R=R+1;break end;U,R=x(Q,R)S[T]=U;T=T+1;R=H(Q,R,A,true)local V=Q:sub(R,R)R=R+1;if V=="]"then break end;if V~=","then J(Q,R,"expected ']' or ','")end end;return S,R end;local R=function(R,S)local T={}S=S+1;while 1 do local U,V;S=H(R,S,A,true)if R:sub(S,S)=="}"then S=S+1;break end;if R:sub(S,S)~='"'then J(R,S,"expected string for key")end;U,S=x(R,S)S=H(R,S,A,true)if R:sub(S,S)~=":"then J(R,S,"expected ':' after key")end;S=H(R,S+1,A,true)V,S=x(R,S)T[U]=V;S=H(R,S,A,true)local W=R:sub(S,S)S=S+1;if W=="}"then break end;if W~=","then J(R,S,"expected '}' or ','")end end;return T,S end;local S={['"']=N,["0"]=O,["1"]=O,["2"]=O,["3"]=O,["4"]=O,["5"]=O,["6"]=O,["7"]=O,["8"]=O,["9"]=O,["-"]=O,t=P,f=P,n=P,["["]=Q,["{"]=R}x=function(T,U)local V=T:sub(U,U)local W=S[V]if W then return W(T,U)end;J(T,U,"unexpected character '"..V.."'")end;local T=function(T)if type(T)~="string"then error("expected argument of type string, got "..type(T))end;local U,V=x(T,H(T,1,A,true))V=H(T,V,A,true)if V<=#T then J(T,V,"trailing garbage")end;return U end;
 local U,V,W=v,T,Z;
 
 
@@ -2090,7 +2090,7 @@ JunkieProtected.API_KEY=ac
 JunkieProtected.PROVIDER=ad
 JunkieProtected.SERVICE_ID=ab
 
-local function ValidateKey(ae)
+function ValidateKey(ae)
 if not ae or ae==""then
 print"No key provided!"
 
@@ -2122,7 +2122,7 @@ return false,"Invalid key. Get one from:"..ah
 end
 end
 
-local function copyLink()
+function copyLink()
 local ae=JunkieProtected.GetKeyLink()
 
 if setclipboard then
@@ -3091,7 +3091,7 @@ aB=not aB
 end)
 end
 
-local function handleSuccess(aA)
+function handleSuccess(aA)
 al:Close()()
 writefile((ag.Folder or"Temp").."/"..ah..".key",tostring(aA))
 task.wait(0.4)
@@ -3179,16 +3179,16 @@ return aa end function a.p()
 local aa=(cloneref or clonereference or function(aa)return aa end)
 
 
-local function map(ab,ac,ad,ae,af)
+function map(ab,ac,ad,ae,af)
 return(ab-ac)*(af-ae)/(ad-ac)+ae
 end
 
-local function viewportPointToWorld(ab,ac)
+function viewportPointToWorld(ab,ac)
 local ad=aa(game:GetService"Workspace").CurrentCamera:ScreenPointToRay(ab.X,ab.Y)
 return ad.Origin+ad.Direction*ac
 end
 
-local function getOffset()
+function getOffset()
 local ab=aa(game:GetService"Workspace").CurrentCamera.ViewportSize.Y
 return map(ab,0,2560,8,56)
 end
@@ -3208,7 +3208,7 @@ local ad,ae=unpack(a.load'p')
 local af=Instance.new("Folder",aa(game:GetService"Workspace").CurrentCamera)
 
 
-local function createAcrylic()
+function createAcrylic()
 local ag=ac("Part",{
 Name="Body",
 Color=Color3.new(0,0,0),
@@ -3230,7 +3230,7 @@ return ag
 end
 
 
-local function createAcrylicBlur(ag)
+function createAcrylicBlur(ag)
 local ah={}
 
 ag=ag or 0.001
@@ -3242,13 +3242,13 @@ bottomRight=Vector2.new(),
 local aj=createAcrylic()
 aj.Parent=af
 
-local function updatePositions(ak,al)
+function updatePositions(ak,al)
 ai.topLeft=al
 ai.topRight=al+Vector2.new(ak.X,0)
 ai.bottomRight=al+ak
 end
 
-local function render()
+function render()
 local ak=aa(game:GetService"Workspace").CurrentCamera
 if ak then
 ak=ak.CFrame
@@ -3275,7 +3275,7 @@ CFrame.fromMatrix((aq+as)/2,am.XVector,am.YVector,am.ZVector)
 aj.Mesh.Scale=Vector3.new(at,au,0)
 end
 
-local function onChange(ak)
+function onChange(ak)
 local al=ae()
 local am=ak.AbsoluteSize-Vector2.new(al,al)
 local an=ak.AbsolutePosition+Vector2.new(al/2,al/2)
@@ -3284,7 +3284,7 @@ updatePositions(am,an)
 task.spawn(render)
 end
 
-local function renderOnChange()
+function renderOnChange()
 local ak=aa(game:GetService"Workspace").CurrentCamera
 if not ak then
 return
@@ -3499,8 +3499,8 @@ end
 ac.Parent=nil
 end
 
-local function registerDefaults()
-local function register(ae)
+function registerDefaults()
+function register(ae)
 if ae:IsA"DepthOfFieldEffect"then
 ad[ae]={enabled=ae.Enabled}
 end
@@ -4240,7 +4240,7 @@ Parent=al,
 local an=false
 local ao=0
 
-local function updateSliderSize()
+function updateSliderSize()
 local ap=ag
 local aq=ap.AbsoluteCanvasSize.Y
 local ar=ap.AbsoluteWindowSize.Y
@@ -4255,7 +4255,7 @@ al.Size=UDim2.new(1,0,as,0)
 al.Visible=true
 end
 
-local function updateScrollingFramePosition()
+function updateScrollingFramePosition()
 local ap=al.Position.Y.Scale
 local aq=ag.AbsoluteCanvasSize.Y
 local ar=ag.AbsoluteWindowSize.Y
@@ -4274,7 +4274,7 @@ au*as
 )
 end
 
-local function updateThumbPosition()
+function updateThumbPosition()
 if an then return end
 
 local ap=ag.CanvasPosition.Y
@@ -5378,7 +5378,7 @@ end)
 
 ae(game:GetService"UserInputService")
 
-local function Color3ToHSB(af)
+function Color3ToHSB(af)
 local ag,ah,ai=af.R,af.G,af.B
 local aj=math.max(ag,ah,ai)
 local ak=math.min(ag,ah,ai)
@@ -5408,14 +5408,14 @@ b=ao,
 }
 end
 
-local function GetPerceivedBrightness(af)
+function GetPerceivedBrightness(af)
 local ag=af.R
 local ah=af.G
 local ai=af.B
 return 0.299*ag+0.587*ah+0.114*ai
 end
 
-local function GetTextColorForHSB(af)
+function GetTextColorForHSB(af)
 local ag=Color3ToHSB(af)local
 ah, ai, aj=ag.h, ag.s, ag.b
 if GetPerceivedBrightness(af)>0.5 then
@@ -5425,7 +5425,7 @@ return Color3.fromHSV(ah/360,0,0.98)
 end
 end
 
-local function getElementPosition(af,ag)
+function getElementPosition(af,ag)
 if type(ag)~="number"or ag~=math.floor(ag)then
 return nil,1
 end
@@ -5442,7 +5442,7 @@ if ah==0 or ag<1 or ag>ah then
 return nil,2
 end
 
-local function isDelimiter(ai)
+function isDelimiter(ai)
 if ai==nil then
 return true
 end
@@ -5454,7 +5454,7 @@ if isDelimiter(af[ag])then
 return nil,3
 end
 
-local function calculate(ai,aj)
+function calculate(ai,aj)
 if aj==1 then
 return"Squircle"
 end
@@ -5561,7 +5561,7 @@ ao.Size=UDim2.new(0,aj,0,aj)
 am=aj
 end
 
-local function CreateText(ap,aq)
+function CreateText(ap,aq)
 local ar=typeof(ag.Color)=="string"
 and GetTextColorForHSB(Color3.fromHex(aa.Colors[ag.Color]))
 or typeof(ag.Color)=="Color3"and GetTextColorForHSB(ag.Color)
@@ -6838,16 +6838,15 @@ function DraggingXPosSlider.MakeDraggable(MainFrame, DragFrame, CallbackTable)
     local originalZIndex = MainFrame.ZIndex
     local isDraggingStarted = false
     local currentTouch = nil
-    local isResizing = false
     
     local UserInputService = game:GetService("UserInputService")
     
-    local function getScreenSize()
+    function getScreenSize()
         return workspace.CurrentCamera.ViewportSize
     end
     
-    local function updatePosition(input)
-        if not dragging or not dragStart or isResizing then return end
+    function updatePosition(input)
+        if not dragging or not dragStart then return end
         
         local deltaX = input.Position.X - dragStart.X
         dragDistance = math.abs(deltaX)
@@ -6874,7 +6873,7 @@ function DraggingXPosSlider.MakeDraggable(MainFrame, DragFrame, CallbackTable)
         end
     end
     
-    local function resetDragState()
+    function resetDragState()
         dragging = false
         dragStart = nil
         startPos = nil
@@ -6887,7 +6886,7 @@ function DraggingXPosSlider.MakeDraggable(MainFrame, DragFrame, CallbackTable)
     local touchEndedConnection = nil
     local movementConnection = nil
     
-    local function onInputEnded()
+    function onInputEnded()
         if dragging then
             local wasDragged = dragDistance > DRAG_THRESHOLD
             if not wasDragged and CallbackTable and CallbackTable.OnClick then
@@ -6915,7 +6914,7 @@ function DraggingXPosSlider.MakeDraggable(MainFrame, DragFrame, CallbackTable)
         end
     end
     
-    local function onInputEndedHandler(endInput)
+    function onInputEndedHandler(endInput)
         if dragging then
             if endInput.UserInputType == Enum.UserInputType.MouseButton1 then
                 onInputEnded()
@@ -6925,8 +6924,8 @@ function DraggingXPosSlider.MakeDraggable(MainFrame, DragFrame, CallbackTable)
         end
     end
     
-    local function onMovement(input)
-        if dragging and not isResizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input == currentTouch) then
+    function onMovement(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input == currentTouch) then
             local currentDeltaX = math.abs(input.Position.X - dragStart.X)
             if not isDraggingStarted and currentDeltaX > DRAG_THRESHOLD then
                 isDraggingStarted = true
@@ -6939,9 +6938,9 @@ function DraggingXPosSlider.MakeDraggable(MainFrame, DragFrame, CallbackTable)
         end
     end
     
-    local function onInputBegan(input)
+    function onInputBegan(input)
         if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) 
-            and input.UserInputState == Enum.UserInputState.Begin and not dragging and not isResizing then
+            and input.UserInputState == Enum.UserInputState.Begin and not dragging then
             if DraggingXPosSlider.IsMouseOverFrame(DragFrame, input.Position) then
                 dragging = true
                 dragStart = input.Position
@@ -6974,11 +6973,7 @@ function DraggingXPosSlider.MakeDraggable(MainFrame, DragFrame, CallbackTable)
     end
     
     local inputBeganConnection = DragFrame.InputBegan:Connect(onInputBegan)
-    
-    local function SetResizing(value)
-        isResizing = value
-    end
-    
+
     local cleanupFunction = function()
         inputBeganConnection:Disconnect()
         if mouseButton1Connection then mouseButton1Connection:Disconnect() end
@@ -6989,7 +6984,7 @@ function DraggingXPosSlider.MakeDraggable(MainFrame, DragFrame, CallbackTable)
         end
     end
     
-    return cleanupFunction, SetResizing
+    return cleanupFunction
 end
 
 local ah={}
@@ -7036,14 +7031,14 @@ function ah.New(aj,ak)
     local as=true
     local at=al.Step%1~=0
 
-    local function FormatValue(au)
+    function FormatValue(au)
         if at then
             return tonumber(string.format("%.2f",au))
         end
         return math.floor(au+0.5)
     end
 
-    local function CalculateValue(au)
+    function CalculateValue(au)
         if at then
             return math.floor(au/al.Step+0.5)*al.Step
         else
@@ -7233,7 +7228,7 @@ function ah.New(aj,ak)
             if ax then ax:Close(false) end
         end,
     }
-    local dragCleanup, setResizing = DraggingXPosSlider.MakeDraggable(
+    local dragCleanup = DraggingXPosSlider.MakeDraggable(
         al.UIElements.SliderIcon,
         al.UIElements.SliderIcon.Frame.Thumb,
         dragCallbacks
@@ -7340,7 +7335,7 @@ UIPadding=8,
 local ah=a.load'v'.New
 
 function ag.New(ai,aj)
-local function NormalizeKeyCode(ak)
+function NormalizeKeyCode(ak)
 if typeof(ak)=="EnumItem"then
 return ak.Name
 elseif type(ak)=="string"then
@@ -7714,12 +7709,12 @@ MaxSize=Vector2.new(300,400),
 }),
 })
 
-local function RecalculateCanvasSize()
+function RecalculateCanvasSize()
 an.UIElements.Menu.Frame.ScrollingFrame.CanvasSize=
 UDim2.fromOffset(0,an.UIElements.UIListLayout.AbsoluteContentSize.Y)
 end
 
-local function RecalculateListSize()
+function RecalculateListSize()
 local as=ah.ViewportSize.Y*0.6
 
 local at=an.UIElements.UIListLayout.AbsoluteContentSize.Y
@@ -7793,7 +7788,7 @@ an.UIElements.Dropdown.Frame.Frame.TextLabel.Text=(av==""and"--"or av)
 end
 end
 
-local function Callback(at)
+function Callback(at)
 ar:Display()
 if an.Callback then
 task.spawn(function()
@@ -8448,7 +8443,7 @@ self_call=Color3.fromHex"#89B4FA",
 local_property=Color3.fromHex"#CBA6F7",
 }
 
-local function createKeywordSet(ah)
+function createKeywordSet(ah)
 local aj={}
 for ak,al in ipairs(ah)do
 aj[al]=true
@@ -8460,7 +8455,7 @@ local ah=createKeywordSet(ae.lua)
 local aj=createKeywordSet(ae.rbx)
 local ak=createKeywordSet(ae.operators)
 
-local function getHighlight(al,am)
+function getHighlight(al,am)
 local an=al[am]
 
 if af[an.."_color"]then
@@ -9204,7 +9199,7 @@ v.Size=UDim2.new(0,150,0,42)
 return v
 end
 
-local function ToRGB(r)
+function ToRGB(r)
 return{
 R=math.floor(r.R*255),
 G=math.floor(r.G*255),
@@ -9376,14 +9371,14 @@ ax:Update(ax.Default,ax.Transparency)
 
 
 
-local function GetRGB()
+function GetRGB()
 local H=Color3.fromHSV(ax.Hue,ax.Sat,ax.Vib)
 return{R=math.floor(H.r*255),G=math.floor(H.g*255),B=math.floor(H.b*255)}
 end
 
 
 
-local function clamp(H,J,L)
+function clamp(H,J,L)
 return math.clamp(tonumber(H)or 0,J,L)
 end
 
@@ -9399,7 +9394,7 @@ end
 end
 end)
 
-local function updateColorFromInput(H,J)
+function updateColorFromInput(H,J)
 aa.AddSignal(H.Frame.Frame.TextBox.FocusLost,function(L)
 if L then
 local M=H.Frame.Frame.TextBox
@@ -9670,7 +9665,7 @@ Padding=UDim.new(0,4)
 
 local ap,aq
 
-local function createTitle(ar,as)
+function createTitle(ar,as)
 return ae("TextLabel",{
 BackgroundTransparency=1,
 TextXAlignment=al.TextXAlignment,
@@ -9700,7 +9695,7 @@ if al.Desc then
 aq=createTitle(al.Desc,"Desc")
 end
 
-local function UpdateTitleSize()
+function UpdateTitleSize()
 local ar=0
 if am then
 ar=ar-(al.IconSize+8)
@@ -9929,7 +9924,7 @@ local ae=aa.New
 
 local af={}
 
-local function ParseAspectRatio(ah)
+function ParseAspectRatio(ah)
 if type(ah)=="string"then
 local aj,ak=ah:match"(%d+):(%d+)"
 if aj and ak then
@@ -10772,7 +10767,7 @@ if ax and not au then
 au=ak(ap.Desc,am.ToolTipParent,true)
 au.Container.AnchorPoint=Vector2.new(0.5,0.5)
 
-local function updatePosition()
+function updatePosition()
 if au then
 au.Container.Position=UDim2.new(0,af.X,0,af.Y-4)
 end
@@ -11431,7 +11426,7 @@ Name="Outline",
 }),
 })
 
-local function CreateSearchTab(at,au,av,aw,ax,ay)
+function CreateSearchTab(at,au,av,aw,ax,ay)
 local az=ah("TextButton",{
 Size=UDim2.new(1,0,0,0),
 AutomaticSize="Y",
@@ -11591,7 +11586,7 @@ end)
 return az
 end
 
-local function ContainsText(at,au)
+function ContainsText(at,au)
 if not au or au==""then
 return false
 end
@@ -11606,7 +11601,7 @@ local aw=string.lower(au)
 return string.find(av,aw,1,true)~=nil
 end
 
-local function Search(at)
+function Search(at)
 if not at or at==""then
 return{}
 end
@@ -12100,7 +12095,7 @@ end
 
 local aB
 if au.User then
-local function GetUserThumb()local
+function GetUserThumb()local
 b=ah:GetUserThumbnailAsync(
 au.User.Anonymous and 1 or ah.LocalPlayer.UserId,
 Enum.ThumbnailType.HeadShot,
@@ -12279,7 +12274,7 @@ and not h
 and string.match(au.Background,"^(https?://.+|rbx%w+://.+)")
 or nil
 
-local function GetImageExtension(l)
+function GetImageExtension(l)
 local m=l:match"%.(%w+)$"or l:match"%.(%w+)%?"
 if m then
 m=m:lower()
@@ -13664,124 +13659,334 @@ end
 end,(au.Topbar.ButtonsType=="Default"and 999 or 997),nil,Color3.fromHex"#F4695F")
 
 function au.Tag(G,H)
-if au.UIElements.Main.Main.Topbar.Center.Visible==false then
-au.UIElements.Main.Main.Topbar.Center.Visible=true
+    if au.UIElements.Main.Main.Topbar.Center.Visible == false then
+        au.UIElements.Main.Main.Topbar.Center.Visible = true
+    end
+    H.Window = au
+    local tag = ar:New(H, au.UIElements.Main.Main.Topbar.Center)
+    
+    local centerFrame = au.UIElements.Main.Main.Topbar.Center
+    local contentContainer = centerFrame:FindFirstChild("UIListLayout") or centerFrame:FindFirstChildOfClass("UIListLayout")
+    
+    function updateScrolling()
+        local totalContentWidth = 0
+        if contentContainer then
+            totalContentWidth = contentContainer.AbsoluteContentSize.X
+        else
+            local children = centerFrame:GetChildren()
+            for _, child in ipairs(children) do
+                if child:IsA("GuiObject") and child.Visible then
+                    totalContentWidth = totalContentWidth + child.AbsoluteSize.X
+                end
+            end
+        end
+        
+        if totalContentWidth <= centerFrame.AbsoluteSize.X then
+            centerFrame.ScrollingEnabled = false
+        else
+            centerFrame.ScrollingEnabled = true
+        end
+    end
+    
+    centerFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateScrolling)
+    
+    if contentContainer then
+        contentContainer:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateScrolling)
+    end
+    
+    function onChildAdded()
+        updateScrolling()
+    end
+    
+    function onChildRemoved()
+        updateScrolling()
+    end
+    
+    centerFrame.ChildAdded:Connect(onChildAdded)
+    centerFrame.ChildRemoved:Connect(onChildRemoved)
+    
+    for _, child in ipairs(centerFrame:GetChildren()) do
+        if child:IsA("GuiObject") then
+            child:GetPropertyChangedSignal("Visible"):Connect(updateScrolling)
+            child:GetPropertyChangedSignal("Size"):Connect(updateScrolling)
+            child:GetPropertyChangedSignal("Position"):Connect(updateScrolling)
+        end
+    end
+    
+    function onDescendantAdded(descendant)
+        if descendant:IsA("GuiObject") then
+            descendant:GetPropertyChangedSignal("Visible"):Connect(updateScrolling)
+            descendant:GetPropertyChangedSignal("Size"):Connect(updateScrolling)
+            descendant:GetPropertyChangedSignal("Position"):Connect(updateScrolling)
+            updateScrolling()
+        end
+    end
+    
+    centerFrame.DescendantAdded:Connect(onDescendantAdded)
+    
+    updateScrolling()
+    
+    return tag
 end
-H.Window=au
-return ar:New(H,au.UIElements.Main.Main.Topbar.Center)
+local isResizeDragging = {}
+
+function isResizeDragging.GetDistance(pos1, pos2)
+    return math.sqrt((pos2.X - pos1.X)^2 + (pos2.Y - pos1.Y)^2)
 end
 
-local function startResizing(G)
-if au.CanResize then
-isResizing=true
-ay.Active=true
-initialSize=au.UIElements.Main.Size
-initialInputPosition=G.Position
-
-
-an(ax.ImageLabel,0.1,{ImageTransparency=0.35}):Play()
-
-al.AddSignal(G.Changed,function()
-if G.UserInputState==Enum.UserInputState.End then
-isResizing=false
-ay.Active=false
-
-
-an(ax.ImageLabel,0.17,{ImageTransparency=0.8}):Play()
+function isResizeDragging.IsMouseOverFrame(Frame, Position)
+    local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize
+    return Position.X >= AbsPos.X and Position.X <= AbsPos.X + AbsSize.X and 
+           Position.Y >= AbsPos.Y and Position.Y <= AbsPos.Y + AbsSize.Y
 end
+
+function isResizeDragging.MakeResizable(ResizeHandle, TargetFrame, CallbackTable)
+    if not ResizeHandle or not TargetFrame then return end
+    
+    local isResizing = false
+    local resizeStart = nil
+    local initialSize = nil
+    local initialPosition = nil
+    local resizeDistance = 0
+    local RESIZE_THRESHOLD = 3
+    local isResizingStarted = false
+    local currentTouch = nil
+    
+    if CallbackTable then
+        if CallbackTable.MinSize then MIN_SIZE = CallbackTable.MinSize end
+        if CallbackTable.MaxSize then MAX_SIZE = CallbackTable.MaxSize end
+    end
+    
+    local function getScreenSize()
+        local camera = workspace.CurrentCamera
+        if camera then
+            return camera.ViewportSize
+        else
+            return game:GetService("UserInputService"):GetMouseLocation()
+        end
+    end
+    
+    local function updateSize(input)
+        if not isResizing or not resizeStart then return end
+        local delta = input.Position - resizeStart
+        resizeDistance = math.sqrt(delta.X^2 + delta.Y^2)
+        
+        local newWidth = initialSize.X.Offset + delta.X * 2
+        local newHeight = initialSize.Y.Offset + delta.Y * 2
+        
+        newWidth = math.clamp(newWidth, MIN_SIZE.X, MAX_SIZE.X)
+        newHeight = math.clamp(newHeight, MIN_SIZE.Y, MAX_SIZE.Y)
+        
+        local newSize = UDim2.new(initialSize.X.Scale, newWidth, initialSize.Y.Scale, newHeight)
+        
+        TargetFrame.Size = newSize
+        
+        if CallbackTable and CallbackTable.OnResizeUpdate then
+            CallbackTable.OnResizeUpdate(TargetFrame.Size, resizeDistance)
+        end
+    end
+    
+    local function resetResizeState()
+        isResizing = false
+        resizeStart = nil
+        initialSize = nil
+        initialPosition = nil
+        resizeDistance = 0
+        isResizingStarted = false
+        currentTouch = nil
+    end
+    
+    local mouseButton1Connection = nil
+    local touchEndedConnection = nil
+    local movementConnection = nil
+    
+    local function onInputEnded()
+        if isResizing then
+            local wasResized = resizeDistance > RESIZE_THRESHOLD
+            if wasResized and isResizingStarted then
+                if CallbackTable and CallbackTable.OnResizeEnd then
+                    CallbackTable.OnResizeEnd(TargetFrame.Size, wasResized)
+                end
+            end
+            resetResizeState()
+            
+            if mouseButton1Connection then
+                mouseButton1Connection:Disconnect()
+                mouseButton1Connection = nil
+            end
+            if touchEndedConnection then
+                touchEndedConnection:Disconnect()
+                touchEndedConnection = nil
+            end
+            if movementConnection then
+                movementConnection:Disconnect()
+                movementConnection = nil
+            end
+        end
+    end
+    
+    local function onInputEndedHandler(endInput)
+        if isResizing then
+            if endInput.UserInputType == Enum.UserInputType.MouseButton1 then
+                onInputEnded()
+            elseif endInput.UserInputType == Enum.UserInputType.Touch and endInput == currentTouch then
+                onInputEnded()
+            end
+        end
+    end
+    
+    local function onMovement(input)
+        if isResizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input == currentTouch) then
+            if not isResizingStarted and resizeDistance > RESIZE_THRESHOLD then
+                isResizingStarted = true
+                if CallbackTable and CallbackTable.OnResizeStart then
+                    CallbackTable.OnResizeStart()
+                end
+            end
+            updateSize(input)
+        end
+    end
+    
+    local function onInputBegan(input)
+        if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and 
+           input.UserInputState == Enum.UserInputState.Begin and not isResizing then
+            
+            if isResizeDragging.IsMouseOverFrame(ResizeHandle, input.Position) then
+                isResizing = true
+                resizeStart = input.Position
+                initialSize = TargetFrame.Size
+                initialPosition = TargetFrame.Position
+                resizeDistance = 0
+                isResizingStarted = false
+                
+                if input.UserInputType == Enum.UserInputType.Touch then
+                    currentTouch = input
+                else
+                    currentTouch = nil
+                end
+                
+                if CallbackTable and CallbackTable.OnResizeHandleHover then
+                    CallbackTable.OnResizeHandleHover(true)
+                end
+                
+                mouseButton1Connection = game:GetService("UserInputService").InputEnded:Connect(function(endInput)
+                    if endInput.UserInputType == Enum.UserInputType.MouseButton1 then
+                        onInputEndedHandler(endInput)
+                    end
+                end)
+                touchEndedConnection = game:GetService("UserInputService").InputEnded:Connect(function(endInput)
+                    if endInput.UserInputType == Enum.UserInputType.Touch then
+                        onInputEndedHandler(endInput)
+                    end
+                end)
+                movementConnection = game:GetService("UserInputService").InputChanged:Connect(function(moveInput)
+                    if moveInput.UserInputType == Enum.UserInputType.MouseMovement or moveInput.UserInputType == Enum.UserInputType.Touch then
+                        onMovement(moveInput)
+                    end
+                end)
+            end
+        end
+    end
+    
+    local hoverConnection = nil
+    local hoverLeaveConnection = nil
+    
+    if CallbackTable and CallbackTable.OnResizeHandleHover then
+        hoverConnection = ResizeHandle.MouseEnter:Connect(function()
+            if not isResizing then
+                CallbackTable.OnResizeHandleHover(true)
+            end
+        end)
+        
+        hoverLeaveConnection = ResizeHandle.MouseLeave:Connect(function()
+            if not isResizing then
+                CallbackTable.OnResizeHandleHover(false)
+            end
+        end)
+    end
+    
+    local inputBeganConnection = ResizeHandle.InputBegan:Connect(onInputBegan)
+    
+    local cleanupFunction = function()
+        inputBeganConnection:Disconnect()
+        if hoverConnection then hoverConnection:Disconnect() end
+        if hoverLeaveConnection then hoverLeaveConnection:Disconnect() end
+        if mouseButton1Connection then mouseButton1Connection:Disconnect() end
+        if touchEndedConnection then touchEndedConnection:Disconnect() end
+        if movementConnection then movementConnection:Disconnect() end
+    end
+    
+    return cleanupFunction
+end
+
+local resizeHandle = ax.ImageLabel
+local targetFrame = au.UIElements.Main
+
+if resizeCleanup then resizeCleanup() end
+
+resizeCleanup = isResizeDragging.MakeResizable(resizeHandle, targetFrame, {
+    MinSize = Vector2.new(443, 173),
+    MaxSize = Vector2.new(1920, 1080),
+    
+    OnResizeStart = function()
+        ay.Active = true
+        an(resizeHandle, 0.1, {ImageTransparency = 0.35}):Play()
+    end,
+    
+    OnResizeUpdate = function(newSize, distance)
+        au.Size = newSize
+    end,
+    
+    OnResizeEnd = function(finalSize, wasResized)
+        ay.Active = false
+        an(resizeHandle, 0.17, {ImageTransparency = 0.8}):Play()
+    end,
+    
+    OnResizeHandleHover = function(isHovering)
+        if isHovering then
+            an(resizeHandle, 0.1, {ImageTransparency = 0.35}):Play()
+        else
+            an(resizeHandle, 0.17, {ImageTransparency = 0.8}):Play()
+        end
+    end
+})
+
+local lastClickTime = 0
+local doubleClickDelay = 0.4
+local lastClickPosition = nil
+local clickCount = 0
+
+local doubleClickConnection = resizeHandle.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        local currentTime = tick()
+        
+        clickCount = clickCount + 1
+        
+        if clickCount == 1 then
+            lastClickTime = currentTime
+            lastClickPosition = au.Position
+            
+            task.spawn(function()
+                task.wait(doubleClickDelay)
+                if clickCount == 1 then
+                    clickCount = 0
+                    lastClickPosition = nil
+                end
+            end)
+        elseif clickCount == 2 then
+            if currentTime - lastClickTime <= doubleClickDelay and lastClickPosition == au.Position then
+                au:SetToTheCenter()
+            end
+            clickCount = 0
+            lastClickPosition = nil
+        end
+    end
 end)
+
+local function fullCleanup()
+    if resizeCleanup then resizeCleanup() end
+    if doubleClickConnection then doubleClickConnection:Disconnect() end
 end
-end
-
-al.AddSignal(ax.InputBegan,function(G)
-if
-G.UserInputType==Enum.UserInputType.MouseButton1
-or G.UserInputType==Enum.UserInputType.Touch
-then
-if au.CanResize then
-startResizing(G)
-end
-end
-end)
-
-al.AddSignal(ae.InputChanged,function(G)
-if
-G.UserInputType==Enum.UserInputType.MouseMovement
-or G.UserInputType==Enum.UserInputType.Touch
-then
-if isResizing and au.CanResize then
-local H=G.Position-initialInputPosition
-local J=UDim2.new(0,initialSize.X.Offset+H.X*2,0,initialSize.Y.Offset+H.Y*2)
-
-J=UDim2.new(
-J.X.Scale,
-math.clamp(J.X.Offset,au.MinSize.X,au.MaxSize.X),
-J.Y.Scale,
-math.clamp(J.Y.Offset,au.MinSize.Y,au.MaxSize.Y)
-)
-
-an(au.UIElements.Main,0.08,{
-Size=J,
-},Enum.EasingStyle.Quad,Enum.EasingDirection.Out):Play()
-
-au.Size=J
-end
-end
-end)
-
-al.AddSignal(ax.MouseEnter,function()
-if not isResizing then
-an(ax.ImageLabel,0.1,{ImageTransparency=0.35}):Play()
-end
-end)
-al.AddSignal(ax.MouseLeave,function()
-if not isResizing then
-an(ax.ImageLabel,0.17,{ImageTransparency=0.8}):Play()
-end
-end)
-
-
-
-local G=0
-local H=0.4
-local J
-local L=0
-
-function onDoubleClick()
-au:SetToTheCenter()
-end
-
-al.AddSignal(l.Frame.MouseButton1Up,function()
-local M=tick()
-local N=au.Position
-
-L=L+1
-
-if L==1 then
-G=M
-J=N
-
-task.spawn(function()
-task.wait(H)
-if L==1 then
-L=0
-J=nil
-end
-end)
-elseif L==2 then
-if M-G<=H and N==J then
-onDoubleClick()
-end
-
-L=0
-J=nil
-G=0
-else
-L=1
-G=M
-J=N
-end
-end)
 
 
 
@@ -14179,7 +14384,7 @@ local aB=aA()
 if aw.KeySystem then
 ay=false
 
-local function loadKeysystem()
+function loadKeysystem()
 an.new(aw,aB,function(b)
 ay=b
 end)
