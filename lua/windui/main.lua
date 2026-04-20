@@ -6575,7 +6575,6 @@ function am.Animate(av, aw, ax)
             if dragThresholdReached then return end
             
             local deltaX = d.Position.X - dragStartX
-            local deltaY = d.Position.Y - dragStartY
             local distance = GetDragDistance(d.Position.X, d.Position.Y)
             
             -- Check if drag threshold has been exceeded
@@ -6633,8 +6632,8 @@ function am.Animate(av, aw, ax)
             ad(aq.Frame.Bar.UIScale, 0.23, {Scale = 1}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
             ad(aq.Frame.Bar.Highlight.BarOverlay, 0.23, {ImageTransparency = 0}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
         end)
-    end
-end
+    end -- Close the if statement
+end -- Close the function
 
 return ap, am
 return aa end function a.F()
