@@ -975,10 +975,24 @@ end
 function p.Drag(v, x, z)
     local G = {
         CanDraggable = true,
+        cleanup = nil
     }
     
     if not x or typeof(x) ~= "table" then
-        x = { v }
+        x = {v}
+    end
+    
+    -- Helper function to check if mouse is over a frame
+    local function IsMouseOverFrame(Frame, Position)
+        if not Frame or not Position then return false end
+        local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize
+        return Position.X >= AbsPos.X and Position.X <= AbsPos.X + AbsSize.X 
+           and Position.Y >= AbsPos.Y and Position.Y <= AbsPos.Y + AbsSize.Y
+    end
+    
+    -- Helper function to calculate distance
+    local function GetDistance(pos1, pos2)
+        return math.sqrt((pos2.X - pos1.X)^2 + (pos2.Y - pos1.Y)^2)
     end
     
     local dragging = false
@@ -986,27 +1000,20 @@ function p.Drag(v, x, z)
     local startPos = nil
     local dragDistance = 0
     local DRAG_THRESHOLD = 5
+    local originalZIndex = v.ZIndex
     local isDraggingStarted = false
     local currentTouch = nil
     local activeDragFrame = nil
     
-    local function getDistance(pos1, pos2)
-        return math.sqrt((pos2.X - pos1.X)^2 + (pos2.Y - pos1.Y)^2)
-    end
-    
-    local function isMouseOverFrame(Frame, Position)
-        local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize
-        return Position.X >= AbsPos.X and Position.X <= AbsPos.X + AbsSize.X and 
-               Position.Y >= AbsPos.Y and Position.Y <= AbsPos.Y + AbsSize.Y
-    end
+    local mouseButton1Connection = nil
+    local touchEndedConnection = nil
+    local movementConnection = nil
+    local inputEndedConnections = {}
     
     local function updatePosition(input)
-        if not dragging or not dragStart or not G.CanDraggable then
-            return
-        end
-        
+        if not dragging or not dragStart or not G.CanDraggable then return end
         local delta = input.Position - dragStart
-        dragDistance = getDistance(dragStart, input.Position)
+        dragDistance = GetDistance(dragStart, input.Position)
         
         p.Tween(v, 0.02, {
             Position = UDim2.new(
@@ -1016,6 +1023,10 @@ function p.Drag(v, x, z)
                 startPos.Y.Offset + delta.Y
             )
         }):Play()
+        
+        if z and type(z) == "function" then
+            z(true, activeDragFrame, dragDistance)
+        end
     end
     
     local function resetDragState()
@@ -1026,106 +1037,114 @@ function p.Drag(v, x, z)
         isDraggingStarted = false
         currentTouch = nil
         activeDragFrame = nil
+        
+        if mouseButton1Connection then
+            mouseButton1Connection:Disconnect()
+            mouseButton1Connection = nil
+        end
+        if touchEndedConnection then
+            touchEndedConnection:Disconnect()
+            touchEndedConnection = nil
+        end
+        if movementConnection then
+            movementConnection:Disconnect()
+            movementConnection = nil
+        end
     end
     
-    local function onInputEnded(input)
-        if dragging and G.CanDraggable then
+    local function onInputEnded()
+        if dragging then
             local wasDragged = dragDistance > DRAG_THRESHOLD
             
-            if z and typeof(z) == "function" then
-                z(false, activeDragFrame)
-            end
-            
-            if wasDragged and isDraggingStarted then
-                -- Drag completed successfully
+            if z and type(z) == "function" then
+                z(false, activeDragFrame, wasDragged)
             end
             
             resetDragState()
         end
     end
     
-    -- Store connections for cleanup
-    local connections = {}
-    
-    for H, J in pairs(x) do
-        local inputBeganConn = J.InputBegan:Connect(function(L)
-            if (L.UserInputType == Enum.UserInputType.MouseButton1 or 
-                L.UserInputType == Enum.UserInputType.Touch) and 
-               L.UserInputState == Enum.UserInputState.Begin and 
-               not dragging and 
-               G.CanDraggable then
-                
-                if isMouseOverFrame(J, L.Position) then
-                    dragging = true
-                    dragStart = L.Position
-                    startPos = v.Position
-                    dragDistance = 0
-                    isDraggingStarted = false
-                    activeDragFrame = J
-                    
-                    if L.UserInputType == Enum.UserInputType.Touch then
-                        currentTouch = L
-                    else
-                        currentTouch = nil
-                    end
-                    
-                    if z and typeof(z) == "function" then
-                        z(true, J)
-                    end
-                end
-            end
-        end)
-        table.insert(connections, inputBeganConn)
-        
-        local inputChangedConn = J.InputChanged:Connect(function(L)
-            if dragging and activeDragFrame == J and G.CanDraggable then
-                if L.UserInputType == Enum.UserInputType.MouseMovement or 
-                   (L.UserInputType == Enum.UserInputType.Touch and L == currentTouch) then
-                    
-                    if not isDraggingStarted and dragDistance > DRAG_THRESHOLD then
-                        isDraggingStarted = true
-                    end
-                    updatePosition(L)
-                end
-            end
-        end)
-        table.insert(connections, inputChangedConn)
+    local function onInputEndedHandler(endInput)
+        if not dragging then return end
+        if endInput.UserInputType == Enum.UserInputType.MouseButton1 then
+            onInputEnded()
+        elseif endInput.UserInputType == Enum.UserInputType.Touch and endInput == currentTouch then
+            onInputEnded()
+        end
     end
     
-    -- Global input handlers
-    local globalInputChanged = e.InputChanged:Connect(function(H)
-        if dragging and G.CanDraggable then
-            if H.UserInputType == Enum.UserInputType.MouseMovement or 
-               (H.UserInputType == Enum.UserInputType.Touch and H == currentTouch) then
-                if not isDraggingStarted and dragDistance > DRAG_THRESHOLD then
-                    isDraggingStarted = true
+    local function onMovement(input)
+        if not dragging or not G.CanDraggable then return end
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input == currentTouch then
+            if not isDraggingStarted and dragDistance > DRAG_THRESHOLD then
+                isDraggingStarted = true
+                if z and type(z) == "function" then
+                    z("start", activeDragFrame)
                 end
-                updatePosition(H)
             end
+            updatePosition(input)
         end
-    end)
-    table.insert(connections, globalInputChanged)
+    end
     
-    local globalInputEnded = e.InputEnded:Connect(function(H)
-        if dragging and G.CanDraggable then
-            if H.UserInputType == Enum.UserInputType.MouseButton1 then
-                onInputEnded(H)
-            elseif H.UserInputType == Enum.UserInputType.Touch and H == currentTouch then
-                onInputEnded(H)
+    local function onInputBegan(input, dragFrame)
+        if not G.CanDraggable or dragging then return end
+        
+        local isValidInput = input.UserInputType == Enum.UserInputType.MouseButton1 
+                          or input.UserInputType == Enum.UserInputType.Touch
+        if not isValidInput or input.UserInputState ~= Enum.UserInputState.Begin then return end
+        
+        if IsMouseOverFrame(dragFrame, input.Position) then
+            dragging = true
+            dragStart = input.Position
+            startPos = v.Position
+            dragDistance = 0
+            isDraggingStarted = false
+            activeDragFrame = dragFrame
+            
+            if input.UserInputType == Enum.UserInputType.Touch then
+                currentTouch = input
+            else
+                currentTouch = nil
             end
+            
+            -- Set up connections
+            mouseButton1Connection = e.InputEnded:Connect(function(endInput)
+                if endInput.UserInputType == Enum.UserInputType.MouseButton1 then
+                    onInputEndedHandler(endInput)
+                end
+            end)
+            
+            touchEndedConnection = e.InputEnded:Connect(function(endInput)
+                if endInput.UserInputType == Enum.UserInputType.Touch then
+                    onInputEndedHandler(endInput)
+                end
+            end)
+            
+            movementConnection = e.InputChanged:Connect(function(moveInput)
+                if moveInput.UserInputType == Enum.UserInputType.MouseMovement 
+                   or moveInput.UserInputType == Enum.UserInputType.Touch then
+                    onMovement(moveInput)
+                end
+            end)
         end
-    end)
-    table.insert(connections, globalInputEnded)
+    end
     
-    function G.Set(H, J)
-        G.CanDraggable = J
+    -- Connect all drag frames
+    for _, dragFrame in pairs(x) do
+        dragFrame.InputBegan:Connect(function(input)
+            onInputBegan(input, dragFrame)
+        end)
+    end
+    
+    function G.Set(_, canDrag)
+        G.CanDraggable = canDrag
+        if not canDrag and dragging then
+            resetDragState()
+        end
     end
     
     function G.Cleanup()
-        for _, conn in ipairs(connections) do
-            conn:Disconnect()
-        end
-        connections = {}
+        resetDragState()
     end
     
     return G
@@ -6526,77 +6545,74 @@ end)
 end
 
 
-function am.Animate(av, aw, ax)
-    if not al.Window.IsToggleDragging then
-        al.Window.IsToggleDragging = true
-        
-        local ay = aw.Position.X
-        local az = aw.Position.Y
-        local aA = aq.Frame.Position.X.Offset
-        local aB = false
-        local b = false
-        local DRAG_THRESHOLD = 8
-        
-        local function getDistance(pos1, pos2)
-            return math.sqrt((pos2.X - pos1.X)^2 + (pos2.Y - pos1.Y)^2)
-        end
-        
-        ad(aq.Frame.Bar.UIScale, 0.28, {Scale = 1.5}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
-        ad(aq.Frame.Bar.Highlight.BarOverlay, 0.28, {ImageTransparency = 0.86}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
-        
-        if ar then ar:Disconnect() end
-        
-        ar = ae.InputChanged:Connect(function(d)
-            if not al.Window.IsToggleDragging then return end
-            if d.UserInputType ~= Enum.UserInputType.MouseMovement and d.UserInputType ~= Enum.UserInputType.Touch then return end
-            if aB then return end
-            
-            local dragDistance = getDistance(Vector2.new(ay, az), d.Position)
-            
-            if not b and dragDistance > DRAG_THRESHOLD then
-                b = true
-            end
-            
-            local g = d.Position.X - ay
-            local h = math.max(2, math.min(aA + g, au - at - 2))
-            local j = math.clamp((h - 2) / (au - at - 4), 0, 1)
-            
-            local l, m, p = am:GetGlassFrame(j)
-            aq.Frame.Bar.Highlight.Glass.Image = l
-            aq.Frame.Bar.Highlight.Glass.ImageRectSize = m
-            aq.Frame.Bar.Highlight.Glass.ImageRectOffset = p
-            
-            ad(aq.Frame, 0.12, {
-                Position = UDim2.new(0, h, 0.5, 0)
-            }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
-        end)
-        
-        if as then as:Disconnect() end
-        
-        as = ae.InputEnded:Connect(function(d)
-            if not al.Window.IsToggleDragging then return end
-            if d.UserInputType ~= Enum.UserInputType.MouseButton1 and d.UserInputType ~= Enum.UserInputType.Touch then return end
-            
-            al.Window.IsToggleDragging = false
-            
-            if ar then ar:Disconnect(); ar = nil end
-            if as then as:Disconnect(); as = nil end
-            
-            if aB then return end
-            
-            if not b then
-                ax:Set(not ax.Value, true, false)
-            else
-                local f = aq.Frame.Position.X.Offset
-                local g = f + at / 2
-                local h = g > au / 2
-                ax:Set(h, true, false)
-            end
-            
-            ad(aq.Frame.Bar.UIScale, 0.23, {Scale = 1}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
-            ad(aq.Frame.Bar.Highlight.BarOverlay, 0.23, {ImageTransparency = 0}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
-        end)
-    end
+function am.Animate(av,aw,ax)
+if not al.Window.IsToggleDragging then
+al.Window.IsToggleDragging=true
+
+local ay=aw.Position.X
+local az=aw.Position.Y
+local aA=aq.Frame.Position.X.Offset
+local aB=false
+local b=false
+
+ad(aq.Frame.Bar.UIScale,0.28,{Scale=1.5},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+ad(aq.Frame.Bar.Highlight.BarOverlay,0.28,{ImageTransparency=.86},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+
+if ar then ar:Disconnect()end
+
+ar=ae.InputChanged:Connect(function(d)
+if not al.Window.IsToggleDragging then return end
+if d.UserInputType~=Enum.UserInputType.MouseMovement and d.UserInputType~=Enum.UserInputType.Touch then return end
+if aB then return end
+
+local f=math.abs(d.Position.X-ay)
+math.abs(d.Position.Y-az)
+
+if not b and f>8 then
+b=true
+end
+
+local g=d.Position.X-ay
+local h=math.max(2,math.min(aA+g,au-at-2))
+
+local j=math.clamp((h-2)/(au-at-4),0,1)
+
+local l,m,p=am:GetGlassFrame(j)
+aq.Frame.Bar.Highlight.Glass.Image=l
+aq.Frame.Bar.Highlight.Glass.ImageRectSize=m
+aq.Frame.Bar.Highlight.Glass.ImageRectOffset=p
+
+ad(aq.Frame,0.12,{
+Position=UDim2.new(0,h,0.5,0)
+},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+end)
+
+if as then as:Disconnect()end
+
+as=ae.InputEnded:Connect(function(d)
+if not al.Window.IsToggleDragging then return end
+if d.UserInputType~=Enum.UserInputType.MouseButton1 and d.UserInputType~=Enum.UserInputType.Touch then return end
+
+al.Window.IsToggleDragging=false
+
+if ar then ar:Disconnect()ar=nil end
+if as then as:Disconnect()as=nil end
+
+if aB then return end
+
+if not b then
+ax:Set(not ax.Value,true,false)
+else
+local f=aq.Frame.Position.X.Offset
+local g=f+at/2
+local h=g>au/2
+ax:Set(h,true,false)
+end
+
+ad(aq.Frame.Bar.UIScale,0.23,{Scale=1},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+ad(aq.Frame.Bar.Highlight.BarOverlay,0.23,{ImageTransparency=0},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+end)
+end
 end
 
 return ap,am
