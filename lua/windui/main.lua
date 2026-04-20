@@ -986,46 +986,26 @@ function p.Drag(v, x, z)
         return Position.X >= AbsPos.X and Position.X <= AbsPos.X + AbsSize.X 
            and Position.Y >= AbsPos.Y and Position.Y <= AbsPos.Y + AbsSize.Y
     end
-    local function GetParentScrollingFrame(frame)
-        local current = frame.Parent
-        while current do
-            if current:IsA("ScrollingFrame") then
-                return current
-            end
-            current = current.Parent
-        end
-        return nil
+    local function GetDistance(pos1, pos2)
+        return math.sqrt((pos2.X - pos1.X)^2 + (pos2.Y - pos1.Y)^2)
     end
     local dragging = false
     local dragStart = nil
     local startPos = nil
     local dragDistance = 0
     local DRAG_THRESHOLD = 5
+    local originalZIndex = v.ZIndex
     local isDraggingStarted = false
     local currentTouch = nil
     local activeDragFrame = nil
-    local disabledScrollingFrames = {} 
     local mouseButton1Connection = nil
     local touchEndedConnection = nil
     local movementConnection = nil
-    local function DisableParentScrolling(frame)
-        local scrollFrame = GetParentScrollingFrame(frame)
-        if scrollFrame and not disabledScrollingFrames[scrollFrame] then
-            disabledScrollingFrames[scrollFrame] = scrollFrame.ScrollingEnabled
-            scrollFrame.ScrollingEnabled = false
-        end
-    end
-    local function RestoreParentScrolling()
-        for scrollFrame, originalState in pairs(disabledScrollingFrames) do
-            if scrollFrame and scrollFrame.Parent then
-                scrollFrame.ScrollingEnabled = originalState
-            end
-        end
-        disabledScrollingFrames = {}
-    end
+    local inputEndedConnections = {}
     local function updatePosition(input)
         if not dragging or not dragStart or not G.CanDraggable then return end
         local delta = input.Position - dragStart
+        dragDistance = GetDistance(dragStart, input.Position)
         p.Tween(v, 0.02, {
             Position = UDim2.new(
                 startPos.X.Scale,
@@ -1046,7 +1026,6 @@ function p.Drag(v, x, z)
         isDraggingStarted = false
         currentTouch = nil
         activeDragFrame = nil
-        RestoreParentScrolling()
         if mouseButton1Connection then
             mouseButton1Connection:Disconnect()
             mouseButton1Connection = nil
@@ -1080,14 +1059,12 @@ function p.Drag(v, x, z)
     local function onMovement(input)
         if not dragging or not G.CanDraggable then return end
         if input.UserInputType == Enum.UserInputType.MouseMovement or input == currentTouch then
-            local newDragDistance = (input.Position - dragStart).Magnitude
-            if not isDraggingStarted and newDragDistance > DRAG_THRESHOLD then
+            if not isDraggingStarted and dragDistance > DRAG_THRESHOLD then
                 isDraggingStarted = true
                 if z and type(z) == "function" then
                     z("start", activeDragFrame)
                 end
             end
-            dragDistance = newDragDistance
             updatePosition(input)
         end
     end
@@ -1097,7 +1074,6 @@ function p.Drag(v, x, z)
                           or input.UserInputType == Enum.UserInputType.Touch
         if not isValidInput or input.UserInputState ~= Enum.UserInputState.Begin then return end
         if IsMouseOverFrame(dragFrame, input.Position) then
-            DisableParentScrolling(dragFrame)
             dragging = true
             dragStart = input.Position
             startPos = v.Position
@@ -1125,27 +1101,12 @@ function p.Drag(v, x, z)
                     onMovement(moveInput)
                 end
             end)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                input:SetAttribute("Handled", true)
-            end
         end
     end
     for _, dragFrame in pairs(x) do
         dragFrame.InputBegan:Connect(function(input)
             onInputBegan(input, dragFrame)
         end)
-        if dragFrame:IsA("TextButton") or dragFrame:IsA("ImageButton") or dragFrame:IsA("Frame") then
-            dragFrame.MouseButton1Down:Connect(function()
-                if not dragging and G.CanDraggable then
-                    local input = {
-                        UserInputType = Enum.UserInputType.MouseButton1,
-                        UserInputState = Enum.UserInputState.Begin,
-                        Position = e:GetMouseLocation()
-                    }
-                    onInputBegan(input, dragFrame)
-                end
-            end)
-        end
     end
     function G.Set(_, canDrag)
         G.CanDraggable = canDrag
@@ -6554,76 +6515,64 @@ end)
 end
 
 
-function am.Animate(av,aw,ax)
-if not al.Window.IsToggleDragging then
-al.Window.IsToggleDragging=true
-
-local ay=aw.Position.X
-local az=aw.Position.Y
-local aA=aq.Frame.Position.X.Offset
-local aB=false
-local b=false
-
-ad(aq.Frame.Bar.UIScale,0.28,{Scale=1.5},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-ad(aq.Frame.Bar.Highlight.BarOverlay,0.28,{ImageTransparency=.86},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-
-if ar then ar:Disconnect()end
-
-ar=ae.InputChanged:Connect(function(d)
-if not al.Window.IsToggleDragging then return end
-if d.UserInputType~=Enum.UserInputType.MouseMovement and d.UserInputType~=Enum.UserInputType.Touch then return end
-if aB then return end
-
-local f=math.abs(d.Position.X-ay)
-math.abs(d.Position.Y-az)
-
-if not b and f>8 then
-b=true
+function am.Animate(av, aw, ax)
+    if not al.Window.IsToggleDragging then
+        al.Window.IsToggleDragging = true
+        local DRAG_THRESHOLD = 5
+        local dragStarted = false
+        local dragStartX = aw.Position.X
+        local dragStartY = aw.Position.Y
+        local initialPosition = aq.Frame.Position.X.Offset
+        local dragDistance = 0
+        local isDraggingStarted = false
+        local function GetDistance(pos1X, pos1Y, pos2X, pos2Y)
+            return math.sqrt((pos2X - pos1X)^2 + (pos2Y - pos1Y)^2)
+        end
+        local initialToggleState = ax.Value
+        ad(aq.Frame.Bar.UIScale, 0.28, {Scale = 1.5}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
+        ad(aq.Frame.Bar.Highlight.BarOverlay, 0.28, {ImageTransparency = 0.86}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
+        if ar then ar:Disconnect() end
+        ar = ae.InputChanged:Connect(function(d)
+            if not al.Window.IsToggleDragging then return end
+            if d.UserInputType ~= Enum.UserInputType.MouseMovement and d.UserInputType ~= Enum.UserInputType.Touch then return end
+            dragDistance = GetDistance(dragStartX, dragStartY, d.Position.X, d.Position.Y)
+            if not isDraggingStarted and dragDistance > DRAG_THRESHOLD then
+                isDraggingStarted = true
+                dragStarted = true
+            end
+            local deltaX = d.Position.X - dragStartX
+            local newPosition = math.max(2, math.min(initialPosition + deltaX, au - at - 2))
+            local progress = math.clamp((newPosition - 2) / (au - at - 4), 0, 1)
+            local glassId, glassSize, glassOffset = am:GetGlassFrame(progress)
+            aq.Frame.Bar.Highlight.Glass.Image = glassId
+            aq.Frame.Bar.Highlight.Glass.ImageRectSize = glassSize
+            aq.Frame.Bar.Highlight.Glass.ImageRectOffset = glassOffset
+            ad(aq.Frame, 0.12, {
+                Position = UDim2.new(0, newPosition, 0.5, 0)
+            }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
+        end)
+        if as then as:Disconnect() end
+        as = ae.InputEnded:Connect(function(d)
+            if not al.Window.IsToggleDragging then return end
+            if d.UserInputType ~= Enum.UserInputType.MouseButton1 and d.UserInputType ~= Enum.UserInputType.Touch then return end
+            al.Window.IsToggleDragging = false
+            if ar then ar:Disconnect(); ar = nil end
+            if as then as:Disconnect(); as = nil end
+            local finalState
+            if not isDraggingStarted then
+                finalState = not ax.Value
+                ax:Set(finalState, true, false)
+            else
+                local currentPos = aq.Frame.Position.X.Offset
+                local centerPosition = currentPos + at / 2
+                finalState = centerPosition > au / 2
+                ax:Set(finalState, true, false)
+            end
+            ad(aq.Frame.Bar.UIScale, 0.23, {Scale = 1}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
+            ad(aq.Frame.Bar.Highlight.BarOverlay, 0.23, {ImageTransparency = 0}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
+        end)
+    end
 end
-
-local g=d.Position.X-ay
-local h=math.max(2,math.min(aA+g,au-at-2))
-
-local j=math.clamp((h-2)/(au-at-4),0,1)
-
-local l,m,p=am:GetGlassFrame(j)
-aq.Frame.Bar.Highlight.Glass.Image=l
-aq.Frame.Bar.Highlight.Glass.ImageRectSize=m
-aq.Frame.Bar.Highlight.Glass.ImageRectOffset=p
-
-ad(aq.Frame,0.12,{
-Position=UDim2.new(0,h,0.5,0)
-},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-end)
-
-if as then as:Disconnect()end
-
-as=ae.InputEnded:Connect(function(d)
-if not al.Window.IsToggleDragging then return end
-if d.UserInputType~=Enum.UserInputType.MouseButton1 and d.UserInputType~=Enum.UserInputType.Touch then return end
-
-al.Window.IsToggleDragging=false
-
-if ar then ar:Disconnect()ar=nil end
-if as then as:Disconnect()as=nil end
-
-if aB then return end
-
-if not b then
-ax:Set(not ax.Value,true,false)
-else
-local f=aq.Frame.Position.X.Offset
-local g=f+at/2
-local h=g>au/2
-ax:Set(h,true,false)
-end
-
-ad(aq.Frame.Bar.UIScale,0.23,{Scale=1},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-ad(aq.Frame.Bar.Highlight.BarOverlay,0.23,{ImageTransparency=0},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-end)
-end
-end
-
 return ap,am
 end
 
@@ -7071,76 +7020,86 @@ end
 
 local ay=ak.Tab.UIElements.ContainerFrame
 
-function al.Set(az,aA,aB)
-if as then
-if not al.IsFocusing and not ai and(not aB or(aB.UserInputType==Enum.UserInputType.MouseButton1 or aB.UserInputType==Enum.UserInputType.Touch))then
-if aB then
-am=(aB.UserInputType==Enum.UserInputType.Touch)
-ay.ScrollingEnabled=false
-ai=true
-
-local b=am and aB.Position.X or ac:GetMouseLocation().X
-local d=math.clamp((b-al.UIElements.SliderIcon.AbsolutePosition.X)/al.UIElements.SliderIcon.AbsoluteSize.X,0,1)
-aA=CalculateValue(al.Value.Min+d*(al.Value.Max-al.Value.Min))
-aA=math.clamp(aA,al.Value.Min or 0,al.Value.Max or 100)
-
-if aA~=aq then
-ag(al.UIElements.SliderIcon.Frame,0.05,{Size=UDim2.new(d,0,1,0)}):Play()
-al.UIElements.SliderContainer.TextBox.Text=FormatValue(aA)
-if ax then ax.TitleFrame.Text=FormatValue(aA)end
-al.Value.Default=FormatValue(aA)
-aq=aA
-ae.SafeCallback(al.Callback,FormatValue(aA))
+function al.Set(az, aA, aB)
+    if as then
+        if not al.IsFocusing and not ai and (not aB or (aB.UserInputType == Enum.UserInputType.MouseButton1 or aB.UserInputType == Enum.UserInputType.Touch)) then
+            if aB then
+                local DRAG_THRESHOLD = 5
+                local dragStarted = false
+                local dragStartX = aB.Position.X
+                local dragStartY = aB.Position.Y
+                local dragDistance = 0
+                local initialProgress = ar
+                local isDraggingStarted = false
+                local finalProgress = ar
+                am = (aB.UserInputType == Enum.UserInputType.Touch)
+                ay.ScrollingEnabled = false
+                ai = true
+                local initialValue = aq
+                local function updateSliderFromInput(inputPos)
+                    local posX = am and inputPos.Position.X or ae:GetMouseLocation().X
+                    local progress = math.clamp((posX - al.UIElements.SliderIcon.AbsolutePosition.X) / al.UIElements.SliderIcon.AbsoluteSize.X, 0, 1)
+                    local newValue = CalculateValue(al.Value.Min + progress * (al.Value.Max - al.Value.Min))
+                    newValue = math.clamp(newValue, al.Value.Min or 0, al.Value.Max or 100)
+                    finalProgress = progress
+                    if newValue ~= aq then
+                        ag(al.UIElements.SliderIcon.Frame, 0.05, {Size = UDim2.new(progress, 0, 1, 0)}):Play()
+                        al.UIElements.SliderContainer.TextBox.Text = FormatValue(newValue)
+                        if ax then ax.TitleFrame.Text = FormatValue(newValue) end
+                        al.Value.Default = FormatValue(newValue)
+                        aq = newValue
+                        ae.SafeCallback(al.Callback, FormatValue(newValue))
+                    end
+                end
+                updateSliderFromInput(aB)
+                an = ad.RenderStepped:Connect(function()
+                    if not ai then return end
+                    local currentMouse = ae:GetMouseLocation()
+                    local dragCurrentX = currentMouse.X
+                    local dragCurrentY = currentMouse.Y
+                    dragDistance = math.sqrt((dragCurrentX - dragStartX)^2 + (dragCurrentY - dragStartY)^2)
+                    if not isDraggingStarted and dragDistance > DRAG_THRESHOLD then
+                        isDraggingStarted = true
+                        dragStarted = true
+                    end
+                    updateSliderFromInput({Position = currentMouse})
+                end)
+                ao = ae.InputEnded:Connect(function(f)
+                    if (f.UserInputType == Enum.UserInputType.MouseButton1 or f.UserInputType == Enum.UserInputType.Touch) and aB == f then
+                        an:Disconnect()
+                        ao:Disconnect()
+                        ai = false
+                        ay.ScrollingEnabled = true
+                        if not isDraggingStarted then
+                            ae.SafeCallback(al.Callback, FormatValue(aq))
+                        else
+                            ae.SafeCallback(al.Callback, FormatValue(aq))
+                        end
+                        if al.Window.NewElements then
+                            ag(al.UIElements.SliderIcon.Frame.Thumb, 0.2, {
+                                ImageTransparency = 0,
+                                Size = UDim2.new(0, al.Window.NewElements and (al.ThumbSize * 2) or (al.ThumbSize + 2), 0, al.Window.NewElements and (al.ThumbSize + 4) or (al.ThumbSize + 2))
+                            }, Enum.EasingStyle.Quint, Enum.EasingDirection.InOut):Play()
+                        end
+                        if ax then ax:Close(false) end
+                    end
+                end)
+            else
+                local aC = math.clamp(aA, al.Value.Min or 0, al.Value.Max or 100)
+                local progress = math.clamp((aC - (al.Value.Min or 0)) / ((al.Value.Max or 100) - (al.Value.Min or 0)), 0, 1)
+                aC = CalculateValue(al.Value.Min + progress * (al.Value.Max - al.Value.Min))
+                if aC ~= aq then
+                    ag(al.UIElements.SliderIcon.Frame, 0.05, {Size = UDim2.new(progress, 0, 1, 0)}):Play()
+                    al.UIElements.SliderContainer.TextBox.Text = FormatValue(aC)
+                    if ax then ax.TitleFrame.Text = FormatValue(aC) end
+                    al.Value.Default = FormatValue(aC)
+                    aq = aC
+                    ae.SafeCallback(al.Callback, FormatValue(aC))
+                end
+            end
+        end
+    end
 end
-
-an=ad.RenderStepped:Connect(function()
-local f=am and aB.Position.X or ac:GetMouseLocation().X
-local g=math.clamp((f-al.UIElements.SliderIcon.AbsolutePosition.X)/al.UIElements.SliderIcon.AbsoluteSize.X,0,1)
-aA=CalculateValue(al.Value.Min+g*(al.Value.Max-al.Value.Min))
-
-if aA~=aq then
-ag(al.UIElements.SliderIcon.Frame,0.05,{Size=UDim2.new(g,0,1,0)}):Play()
-al.UIElements.SliderContainer.TextBox.Text=FormatValue(aA)
-if ax then ax.TitleFrame.Text=FormatValue(aA)end
-al.Value.Default=FormatValue(aA)
-aq=aA
-ae.SafeCallback(al.Callback,FormatValue(aA))
-end
-end)
-
-
-ao=ac.InputEnded:Connect(function(f)
-if(f.UserInputType==Enum.UserInputType.MouseButton1 or f.UserInputType==Enum.UserInputType.Touch)and aB==f then
-an:Disconnect()
-ao:Disconnect()
-ai=false
-ay.ScrollingEnabled=true
-
-if ak.Window.NewElements then
-ag(al.UIElements.SliderIcon.Frame.Thumb,.2,{ImageTransparency=0,Size=UDim2.new(0,ak.Window.NewElements and(al.ThumbSize*2)or(al.ThumbSize+2),0,ak.Window.NewElements and(al.ThumbSize+4)or(al.ThumbSize+2))},Enum.EasingStyle.Quint,Enum.EasingDirection.InOut):Play()
-end
-if ax then ax:Close(false)end
-end
-end)
-else
-aA=math.clamp(aA,al.Value.Min or 0,al.Value.Max or 100)
-
-local b=math.clamp((aA-(al.Value.Min or 0))/((al.Value.Max or 100)-(al.Value.Min or 0)),0,1)
-aA=CalculateValue(al.Value.Min+b*(al.Value.Max-al.Value.Min))
-
-if aA~=aq then
-ag(al.UIElements.SliderIcon.Frame,0.05,{Size=UDim2.new(b,0,1,0)}):Play()
-al.UIElements.SliderContainer.TextBox.Text=FormatValue(aA)
-if ax then ax.TitleFrame.Text=FormatValue(aA)end
-al.Value.Default=FormatValue(aA)
-aq=aA
-ae.SafeCallback(al.Callback,FormatValue(aA))
-end
-end
-end
-end
-end
-
 function al.SetMax(az,aA)
 al.Value.Max=aA
 
