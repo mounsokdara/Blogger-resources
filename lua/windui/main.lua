@@ -6515,88 +6515,73 @@ end)
 end
 
 function am.Animate(av,aw,ax)
-    if not al.Window.IsToggleDragging then
-        al.Window.IsToggleDragging = true
-        
-        local aA = aq.Frame.Position.X.Offset
-        local dragStarted = false
-        
-        ad(aq.Frame.Bar.UIScale,0.28,{Scale=1.5},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-        ad(aq.Frame.Bar.Highlight.BarOverlay,0.28,{ImageTransparency=.86},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-        
-        local dragStartPos = nil
-        local startOffset = nil
-        local dragDistance = 0
-        local DRAG_THRESHOLD = 5
-        
-        local function updatePosition(input)
-            if not dragStartPos then return end
-            
-            local delta = input.Position.X - dragStartPos.X
-            dragDistance = math.abs(delta)
-            
-            local newOffset = math.max(2, math.min(aA + delta, au - at - 2))
-            local j = math.clamp((newOffset - 2) / (au - at - 4), 0, 1)
-            
-            aq.Frame.Position = UDim2.new(0, newOffset, 0.5, 0)
-            
-            local l, m, p = am:GetGlassFrame(j)
-            aq.Frame.Bar.Highlight.Glass.Image = l
-            aq.Frame.Bar.Highlight.Glass.ImageRectSize = m
-            aq.Frame.Bar.Highlight.Glass.ImageRectOffset = p
-        end
-        
-        local function onDragEnd(wasDragged)
-            if wasDragged and dragDistance > DRAG_THRESHOLD then
-                local currentOffset = aq.Frame.Position.X.Offset
-                local center = currentOffset + at / 2
-                local newState = center > au / 2
-                ax:Set(newState, true, false)
-            elseif not wasDragged then
-                ax:Set(not ax.Value, true, false)
-            end
-            
-            ad(aq.Frame.Bar.UIScale,0.23,{Scale=1},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-            ad(aq.Frame.Bar.Highlight.BarOverlay,0.23,{ImageTransparency=0},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-            
-            al.Window.IsToggleDragging = false
-            dragStarted = false
-            dragStartPos = nil
-            startOffset = nil
-            dragDistance = 0
-        end
-        
-        local inputBeganConn
-        local inputChangedConn
-        local inputEndedConn
-        
-        inputBeganConn = aw.InputBegan:Connect(function(input)
-            if dragStarted then return end
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                dragStarted = true
-                dragStartPos = input.Position
-                startOffset = aq.Frame.Position.X.Offset
-                dragDistance = 0
-                
-                inputChangedConn = aw.InputChanged:Connect(function(moveInput)
-                    if dragStarted and (moveInput.UserInputType == Enum.UserInputType.MouseMovement or moveInput.UserInputType == Enum.UserInputType.Touch) then
-                        updatePosition(moveInput)
-                    end
-                end)
-                
-                inputEndedConn = aw.InputEnded:Connect(function(endInput)
-                    if dragStarted and endInput.UserInputType == input.UserInputType then
-                        local wasDragged = dragDistance > DRAG_THRESHOLD
-                        onDragEnd(wasDragged)
-                        
-                        if inputChangedConn then inputChangedConn:Disconnect() end
-                        if inputEndedConn then inputEndedConn:Disconnect() end
-                        if inputBeganConn then inputBeganConn:Disconnect() end
-                    end
-                end)
-            end
-        end)
-    end
+if not al.Window.IsToggleDragging then
+al.Window.IsToggleDragging=true
+
+local ay=aw.Position.X
+local az=aw.Position.Y
+local aA=aq.Frame.Position.X.Offset
+local aB=false
+local b=false
+
+ad(aq.Frame.Bar.UIScale,0.28,{Scale=1.5},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+ad(aq.Frame.Bar.Highlight.BarOverlay,0.28,{ImageTransparency=.86},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+
+if ar then ar:Disconnect()end
+
+ar=ae.InputChanged:Connect(function(d)
+if not al.Window.IsToggleDragging then return end
+if d.UserInputType~=Enum.UserInputType.MouseMovement then return end
+if aB then return end
+
+local f=math.abs(d.Position.X-ay)
+math.abs(d.Position.Y-az)
+
+if not b and f>8 then
+b=true
+end
+
+local g=d.Position.X-ay
+local h=math.max(2,math.min(aA+g,au-at-2))
+
+local j=math.clamp((h-2)/(au-at-4),0,1)
+
+local l,m,p=am:GetGlassFrame(j)
+aq.Frame.Bar.Highlight.Glass.Image=l
+aq.Frame.Bar.Highlight.Glass.ImageRectSize=m
+aq.Frame.Bar.Highlight.Glass.ImageRectOffset=p
+
+ad(aq.Frame,0.12,{
+Position=UDim2.new(0,h,0.5,0)
+},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+end)
+
+if as then as:Disconnect()end
+
+as=ae.InputEnded:Connect(function(d)
+if not al.Window.IsToggleDragging then return end
+if d.UserInputType~=Enum.UserInputType.MouseButton1 then return end
+
+al.Window.IsToggleDragging=false
+
+if ar then ar:Disconnect()ar=nil end
+if as then as:Disconnect()as=nil end
+
+if aB then return end
+
+if not b then
+ax:Set(not ax.Value,true,false)
+else
+local f=aq.Frame.Position.X.Offset
+local g=f+at/2
+local h=g>au/2
+ax:Set(h,true,false)
+end
+
+ad(aq.Frame.Bar.UIScale,0.23,{Scale=1},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+ad(aq.Frame.Bar.Highlight.BarOverlay,0.23,{ImageTransparency=0},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+end)
+end
 end
 
 return ap,am
@@ -6608,6 +6593,7 @@ local aa={}
 local ab=a.load'c'local ac=
 ab.New
 local ad=ab.Tween
+
 
 function aa.New(ae,af,ag,ah,ai,aj)
 local ak={}
@@ -6629,6 +6615,7 @@ false,
 am.Size=UDim2.new(1,-26+ag,1,-26+ag)
 am.AnchorPoint=Vector2.new(0.5,0.5)
 am.Position=UDim2.new(0.5,0,0.5,0)
+
 
 local an=ab.NewRoundFrame(al,"Squircle",{
 ImageTransparency=.85,
@@ -6653,7 +6640,16 @@ ThemeTag={
 ImageColor3="CheckboxBorder",
 ImageTransparency="CheckboxBorderTransparency",
 },
+},{
+
+
+
+
+
+
+
 }),
+
 am,
 },true)
 
@@ -6662,6 +6658,9 @@ if ap then
 ad(an.Layer,0.06,{
 ImageTransparency=0,
 }):Play()
+
+
+
 ad(am.ImageLabel,0.06,{
 ImageTransparency=0,
 }):Play()
@@ -6669,6 +6668,9 @@ else
 ad(an.Layer,0.05,{
 ImageTransparency=1,
 }):Play()
+
+
+
 ad(am.ImageLabel,0.06,{
 ImageTransparency=1,
 }):Play()
@@ -6683,6 +6685,7 @@ end
 
 return an,ak
 end
+
 
 return aa end function a.G()
 local aa=a.load'c'local ab=
@@ -6711,6 +6714,10 @@ UIElements={}
 ai.ToggleFrame=a.load'B'{
 Title=ai.Title,
 Desc=ai.Desc,
+
+
+
+
 Window=ah.Window,
 Parent=ah.Parent,
 TextOffset=(52),
@@ -6727,12 +6734,13 @@ if ai.Value==nil then
 ai.Value=false
 end
 
+
+
 function ai.Lock(ak)
 ai.Locked=true
 aj=false
 return ai.ToggleFrame:Lock(ai.LockedTitle)
 end
-
 function ai.Unlock(ak)
 ai.Locked=false
 aj=true
@@ -6769,12 +6777,42 @@ ai:Set(ak,false,ah.Window.NewElements)
 
 if ah.Window.NewElements and am.Animate then
 if ai.Type=="Toggle"then
-aa.AddSignal(al.ToggleFrame.Hitbox.InputBegan,function(an)
-if not ah.Window.IsToggleDragging and (an.UserInputType == Enum.UserInputType.MouseButton1 or an.UserInputType == Enum.UserInputType.Touch) then
-am:Animate(an,ai)
+local callbackTable = {
+OnClick = function()
+ai:Set(not ai.Value, nil, ah.Window.NewElements)
+end,
+OnDragStart = function()
+ah.Window.IsToggleDragging = true
+end,
+OnDragUpdate = function(position, dragDistance)
+local h = math.max(2, math.min(position.X.Offset, au-at-2))
+local j = math.clamp((h-2)/(au-at-4), 0, 1)
+local l,m,p = am:GetGlassFrame(j)
+aq.Frame.Bar.Highlight.Glass.Image = l
+aq.Frame.Bar.Highlight.Glass.ImageRectSize = m
+aq.Frame.Bar.Highlight.Glass.ImageRectOffset = p
+ad(aq.Frame, 0.12, {
+Position = UDim2.new(0, h, 0.5, 0)
+}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
+end,
+OnDragEnd = function(position, wasDragged)
+ah.Window.IsToggleDragging = false
+if not wasDragged then
+ai:Set(not ai.Value, nil, ah.Window.NewElements)
+else
+local f = aq.Frame.Position.X.Offset
+local g = f + at/2
+local h = g > au/2
+ai:Set(h, true, false)
 end
-end)
+ad(aq.Frame.Bar.UIScale,0.23,{Scale=1},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+ad(aq.Frame.Bar.Highlight.BarOverlay,0.23,{ImageTransparency=0},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
 end
+}
+DraggingXPosToggle.MakeDraggable(aq.Frame, al.ToggleFrame.Hitbox, callbackTable)
+end
+end
+
 else
 if ai.Type=="Toggle"then
 aa.AddSignal(al.ToggleFrame.Hitbox.MouseButton1Click,function()
