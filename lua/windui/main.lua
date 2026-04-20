@@ -6589,15 +6589,15 @@ return ap,am
 end
 
 return aa end function a.F()
-local aa={}
-
-local ab=a.load'c'
-local ac=ab.New
-local ad=ab.Tween
-
-local ae=(cloneref or clonereference or function(ae)return ae end)
-local af=ae(game:GetService"UserInputService")
-local ag=ae(game:GetService"RunService")
+local aa=a.load'c'
+local ab=aa.New
+local ac=aa.Tween
+local ad=a.load'E'.New
+local ae=a.load'F'.New
+local af={}
+local ag=(cloneref or clonereference or function(ag)return ag end)
+local ah=ag(game:GetService"UserInputService")
+local ai=ag(game:GetService"RunService")
 
 local DraggingXPos={}
 
@@ -6743,62 +6743,6 @@ function DraggingXPos.MakeDraggable(MainFrame,DragFrame,CallbackTable)
     return cleanupFunction,SetResizing
 end
 
-local ah={}
-local ai=false
-
-function ah.New(aj,ak)
-    local al=9
-    local am=ab.Image(af,af,0,(ak and ak.Window.Folder or"Temp"),"Checkbox",true,false,"CheckboxIcon")
-    am.Size=UDim2.new(1,-26+ag,1,-26+ag)
-    am.AnchorPoint=Vector2.new(0.5,0.5)
-    am.Position=UDim2.new(0.5,0,0.5,0)
-    local an=ab.NewRoundFrame(al,"Squircle",{
-        ImageTransparency=.85,
-        ThemeTag={ImageColor3="Text"},
-        Parent=ah,
-        Size=UDim2.new(0,26,0,26),
-    },{
-        ab.NewRoundFrame(al,"Squircle",{
-            Size=UDim2.new(1,0,1,0),
-            Name="Layer",
-            ThemeTag={ImageColor3="Checkbox"},
-            ImageTransparency=1,
-        }),
-        ab.NewRoundFrame(al,"Glass-1.4",{
-            Size=UDim2.new(1,0,1,0),
-            Name="Stroke",
-            ThemeTag={ImageColor3="CheckboxBorder",ImageTransparency="CheckboxBorderTransparency"},
-        }),
-        am,
-    },true)
-    function ak.Set(ao,ap)
-        if ap then
-            ad(an.Layer,0.06,{ImageTransparency=0}):Play()
-            ad(am.ImageLabel,0.06,{ImageTransparency=0}):Play()
-        else
-            ad(an.Layer,0.05,{ImageTransparency=1}):Play()
-            ad(am.ImageLabel,0.06,{ImageTransparency=1}):Play()
-        end
-        task.spawn(function()
-            if ai then
-                ab.SafeCallback(ai,ap)
-            end
-        end)
-    end
-    return an,ak
-end
-
-return ah end function a.G()
-local aa=a.load'c'
-local ab=aa.New
-local ac=aa.Tween
-local ad=a.load'E'.New
-local ae=a.load'F'.New
-local af={}
-local ag=(cloneref or clonereference or function(ag)return ag end)
-local ah=ag(game:GetService"UserInputService")
-local ai=ag(game:GetService"RunService")
-
 function af.New(aj,ak)
     local al={
         __type="Toggle",
@@ -6853,18 +6797,40 @@ function af.New(aj,ak)
     ao.Position=UDim2.new(1,0,ak.Window.NewElements and 0 or 0.5,0)
     
     local aq=ao.ToggleFrame or ao
-    local ar=aq.Frame or aq
-    local as=ar.Thumb or (ar:FindFirstChild("Frame") and ar.Frame) or aq
+    local ar=nil
+    if aq:FindFirstChild("Frame") then
+        ar=aq.Frame
+    elseif aq:FindFirstChild("ToggleFrame") then
+        ar=aq.ToggleFrame
+    else
+        ar=aq
+    end
+    
+    local as=nil
+    if ar and ar:FindFirstChild("Thumb") then
+        as=ar.Thumb
+    elseif ar and ar:FindFirstChild("Frame") and ar.Frame:FindFirstChild("Thumb") then
+        as=ar.Frame.Thumb
+    elseif ar and ar:FindFirstChild("Bar") and ar.Bar:FindFirstChild("Thumb") then
+        as=ar.Bar.Thumb
+    else
+        for _,child in pairs(ar:GetChildren()) do
+            if child.Name=="Thumb" or (child:IsA("ImageLabel") and child.Name:lower():find("thumb")) then
+                as=child
+                break
+            end
+        end
+    end
     
     local dragCallbacks={
         OnDragStart=function()
             if al.IsDragging then return end
             al.IsDragging=true
             ak.Window.IsToggleDragging=true
-            if as and as.UIScale then
+            if as and as:FindFirstChild("UIScale") then
                 ac(as.UIScale,0.28,{Scale=1.5},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
             end
-            if as and as.Highlight and as.Highlight.BarOverlay then
+            if as and as:FindFirstChild("Highlight") and as.Highlight:FindFirstChild("BarOverlay") then
                 ac(as.Highlight.BarOverlay,0.28,{ImageTransparency=.86},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
             end
         end,
@@ -6882,15 +6848,6 @@ function af.New(aj,ak)
             local targetValue=percent>0.5
             if as and as.Position then
                 as.Position=UDim2.new(0,newOffset,0.5,0)
-            end
-            if ao.GlassFrame and ao.GlassFrame.Update then
-                local glassPercent=percent
-                local glassId,glassSize,glassOffset=ao:GetGlassFrame(glassPercent)
-                if ao.GlassFrame then
-                    ao.GlassFrame.Image=glassId
-                    ao.GlassFrame.ImageRectSize=glassSize
-                    ao.GlassFrame.ImageRectOffset=glassOffset
-                end
             end
             if dragDistance>al.DragThreshold and targetValue~=an then
                 an=targetValue
@@ -6916,10 +6873,10 @@ function af.New(aj,ak)
                     aa.SafeCallback(al.Callback,an)
                 end
             end
-            if as and as.UIScale then
+            if as and as:FindFirstChild("UIScale") then
                 ac(as.UIScale,0.23,{Scale=1},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
             end
-            if as and as.Highlight and as.Highlight.BarOverlay then
+            if as and as:FindFirstChild("Highlight") and as.Highlight:FindFirstChild("BarOverlay") then
                 ac(as.Highlight.BarOverlay,0.23,{ImageTransparency=0},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
             end
             al.IsDragging=false
