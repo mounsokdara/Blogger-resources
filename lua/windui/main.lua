@@ -6519,47 +6519,83 @@ function am.Animate(av,aw,ax)
         al.Window.IsToggleDragging = true
         
         local aA = aq.Frame.Position.X.Offset
+        local dragStarted = false
         
         ad(aq.Frame.Bar.UIScale,0.28,{Scale=1.5},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
         ad(aq.Frame.Bar.Highlight.BarOverlay,0.28,{ImageTransparency=.86},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
         
-        local dragCleanup = DraggingXPosToggle.MakeDraggable(aq.Frame, aw, {
-            OnDragUpdate = function(position, dragDistance)
-                local g = position.X.Offset - aA
-                local h = math.max(2, math.min(aA + g, au - at - 2))
-                local j = math.clamp((h - 2) / (au - at - 4), 0, 1)
-                
-                local l, m, p = am:GetGlassFrame(j)
-                aq.Frame.Bar.Highlight.Glass.Image = l
-                aq.Frame.Bar.Highlight.Glass.ImageRectSize = m
-                aq.Frame.Bar.Highlight.Glass.ImageRectOffset = p
-            end,
+        local dragStartPos = nil
+        local startOffset = nil
+        local dragDistance = 0
+        local DRAG_THRESHOLD = 5
+        
+        local function updatePosition(input)
+            if not dragStartPos then return end
             
-            OnDragEnd = function(position, wasDragged)
-                if wasDragged then
-                    local f = position.X.Offset
-                    local g = f + at / 2
-                    local h = g > au / 2
-                    ax:Set(h, true, false)
-                else
-                    ax:Set(not ax.Value, true, false)
-                end
-                
-                ad(aq.Frame.Bar.UIScale,0.23,{Scale=1},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-                ad(aq.Frame.Bar.Highlight.BarOverlay,0.23,{ImageTransparency=0},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-                
-                al.Window.IsToggleDragging = false
-                
-                if dragCleanup then
-                    dragCleanup()
-                end
-            end,
+            local delta = input.Position.X - dragStartPos.X
+            dragDistance = math.abs(delta)
             
-            OnClick = function()
+            local newOffset = math.max(2, math.min(aA + delta, au - at - 2))
+            local j = math.clamp((newOffset - 2) / (au - at - 4), 0, 1)
+            
+            aq.Frame.Position = UDim2.new(0, newOffset, 0.5, 0)
+            
+            local l, m, p = am:GetGlassFrame(j)
+            aq.Frame.Bar.Highlight.Glass.Image = l
+            aq.Frame.Bar.Highlight.Glass.ImageRectSize = m
+            aq.Frame.Bar.Highlight.Glass.ImageRectOffset = p
+        end
+        
+        local function onDragEnd(wasDragged)
+            if wasDragged and dragDistance > DRAG_THRESHOLD then
+                local currentOffset = aq.Frame.Position.X.Offset
+                local center = currentOffset + at / 2
+                local newState = center > au / 2
+                ax:Set(newState, true, false)
+            elseif not wasDragged then
                 ax:Set(not ax.Value, true, false)
-                al.Window.IsToggleDragging = false
             end
-        })
+            
+            ad(aq.Frame.Bar.UIScale,0.23,{Scale=1},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+            ad(aq.Frame.Bar.Highlight.BarOverlay,0.23,{ImageTransparency=0},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+            
+            al.Window.IsToggleDragging = false
+            dragStarted = false
+            dragStartPos = nil
+            startOffset = nil
+            dragDistance = 0
+        end
+        
+        local inputBeganConn
+        local inputChangedConn
+        local inputEndedConn
+        
+        inputBeganConn = aw.InputBegan:Connect(function(input)
+            if dragStarted then return end
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragStarted = true
+                dragStartPos = input.Position
+                startOffset = aq.Frame.Position.X.Offset
+                dragDistance = 0
+                
+                inputChangedConn = aw.InputChanged:Connect(function(moveInput)
+                    if dragStarted and (moveInput.UserInputType == Enum.UserInputType.MouseMovement or moveInput.UserInputType == Enum.UserInputType.Touch) then
+                        updatePosition(moveInput)
+                    end
+                end)
+                
+                inputEndedConn = aw.InputEnded:Connect(function(endInput)
+                    if dragStarted and endInput.UserInputType == input.UserInputType then
+                        local wasDragged = dragDistance > DRAG_THRESHOLD
+                        onDragEnd(wasDragged)
+                        
+                        if inputChangedConn then inputChangedConn:Disconnect() end
+                        if inputEndedConn then inputEndedConn:Disconnect() end
+                        if inputBeganConn then inputBeganConn:Disconnect() end
+                    end
+                end)
+            end
+        end)
     end
 end
 
