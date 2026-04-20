@@ -6515,80 +6515,79 @@ end)
 end
 
 
-function am.Animate(av, aw, ax)
-    if not al.Window.IsToggleDragging then
-        al.Window.IsToggleDragging = true
-        local dragStartX = aw.Position.X
-        local dragStartY = aw.Position.Y
-        local initialOffset = aq.Frame.Position.X.Offset
-        local hasMovedPastThreshold = false
-        local hasStartedDragging = false
-        local DRAG_THRESHOLD = 8
-        local dragDistance = 0
-        local currentTouch = nil
-        ad(aq.Frame.Bar.UIScale, 0.28, {Scale = 1.5}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
-        ad(aq.Frame.Bar.Highlight.BarOverlay, 0.28, {ImageTransparency = 0.86}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
-        local function GetDistance(pos1X, pos1Y, pos2X, pos2Y)
-            return math.sqrt((pos2X - pos1X)^2 + (pos2Y - pos1Y)^2)
-        end
-        local function IsOverToggleFrame(position)
-            if not aq.Frame or not position then return false end
-            local absPos = aq.Frame.AbsolutePosition
-            local absSize = aq.Frame.AbsoluteSize
-            return position.X >= absPos.X and position.X <= absPos.X + absSize.X
-               and position.Y >= absPos.Y and position.Y <= absPos.Y + absSize.Y
-        end
-        if ar then ar:Disconnect() end
-        ar = ae.InputChanged:Connect(function(d)
-            if not al.Window.IsToggleDragging then return end
-            if d.UserInputType ~= Enum.UserInputType.MouseMovement and d.UserInputType ~= Enum.UserInputType.Touch then return end
-            if hasMovedPastThreshold then return end
-            local currentX = d.Position.X
-            local currentY = d.Position.Y
-            dragDistance = GetDistance(dragStartX, dragStartY, currentX, currentY)
-            local deltaX = math.abs(currentX - dragStartX)
-            local deltaY = math.abs(currentY - dragStartY)
-            if not hasStartedDragging and (deltaX > DRAG_THRESHOLD or deltaY > DRAG_THRESHOLD) then
-                hasStartedDragging = true
-            end
-            if not hasStartedDragging then return end
-            local moveDeltaX = currentX - dragStartX
-            local newOffset = math.max(2, math.min(initialOffset + moveDeltaX, au - at - 2))
-            local progress = math.clamp((newOffset - 2) / (au - at - 4), 0, 1)
-            local glassImage, glassSize, glassOffset = am:GetGlassFrame(progress)
-            aq.Frame.Bar.Highlight.Glass.Image = glassImage
-            aq.Frame.Bar.Highlight.Glass.ImageRectSize = glassSize
-            aq.Frame.Bar.Highlight.Glass.ImageRectOffset = glassOffset
-            ad(aq.Frame, 0.12, {
-                Position = UDim2.new(0, newOffset, 0.5, 0)
-            }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
-        end)
-        if as then as:Disconnect() end
-        as = ae.InputEnded:Connect(function(d)
-            if not al.Window.IsToggleDragging then return end
-            local isValidEnd = d.UserInputType == Enum.UserInputType.MouseButton1 
-                            or d.UserInputType == Enum.UserInputType.Touch
-            if not isValidEnd then return end
-            al.Window.IsToggleDragging = false
-            if ar then ar:Disconnect(); ar = nil end
-            if as then as:Disconnect(); as = nil end
-            if hasMovedPastThreshold then
-                return
-            end
-            if not hasStartedDragging then
-                ax:Set(not ax.Value, true, false)
-            else
-                local finalOffset = aq.Frame.Position.X.Offset
-                local centerPosition = finalOffset + at / 2
-                local isToggledOn = centerPosition > au / 2
-                ax:Set(isToggledOn, true, false)
-            end
-            ad(aq.Frame.Bar.UIScale, 0.23, {Scale = 1}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
-            ad(aq.Frame.Bar.Highlight.BarOverlay, 0.23, {ImageTransparency = 0}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
-        end)
-    end
+function am.Animate(av,aw,ax)
+if not al.Window.IsToggleDragging then
+al.Window.IsToggleDragging=true
+
+local ay=aw.Position.X
+local az=aw.Position.Y
+local aA=aq.Frame.Position.X.Offset
+local aB=false
+local b=false
+
+ad(aq.Frame.Bar.UIScale,0.28,{Scale=1.5},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+ad(aq.Frame.Bar.Highlight.BarOverlay,0.28,{ImageTransparency=.86},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+
+if ar then ar:Disconnect()end
+
+ar=ae.InputChanged:Connect(function(d)
+if not al.Window.IsToggleDragging then return end
+if d.UserInputType~=Enum.UserInputType.MouseMovement and d.UserInputType~=Enum.UserInputType.Touch then return end
+if aB then return end
+
+local f=math.abs(d.Position.X-ay)
+math.abs(d.Position.Y-az)
+
+if not b and f>8 then
+b=true
 end
-return ap, am
+
+local g=d.Position.X-ay
+local h=math.max(2,math.min(aA+g,au-at-2))
+
+local j=math.clamp((h-2)/(au-at-4),0,1)
+
+local l,m,p=am:GetGlassFrame(j)
+aq.Frame.Bar.Highlight.Glass.Image=l
+aq.Frame.Bar.Highlight.Glass.ImageRectSize=m
+aq.Frame.Bar.Highlight.Glass.ImageRectOffset=p
+
+ad(aq.Frame,0.12,{
+Position=UDim2.new(0,h,0.5,0)
+},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+end)
+
+if as then as:Disconnect()end
+
+as=ae.InputEnded:Connect(function(d)
+if not al.Window.IsToggleDragging then return end
+if d.UserInputType~=Enum.UserInputType.MouseButton1 and d.UserInputType~=Enum.UserInputType.Touch then return end
+
+al.Window.IsToggleDragging=false
+
+if ar then ar:Disconnect()ar=nil end
+if as then as:Disconnect()as=nil end
+
+if aB then return end
+
+if not b then
+ax:Set(not ax.Value,true,false)
+else
+local f=aq.Frame.Position.X.Offset
+local g=f+at/2
+local h=g>au/2
+ax:Set(h,true,false)
+end
+
+ad(aq.Frame.Bar.UIScale,0.23,{Scale=1},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+ad(aq.Frame.Bar.Highlight.BarOverlay,0.23,{ImageTransparency=0},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+end)
+end
+end
+
+return ap,am
+end
+
 return aa end function a.F()
 local aa={}
 
