@@ -6251,171 +6251,375 @@ end
 return ac end function a.E()
 local aa={}
 
-local aa=a.load'c'
-local ab=aa.New
-local ac=aa.Tween
-local ad=(cloneref or clonereference or function(ad)return ad end)
-local ae=ad(game:GetService"UserInputService")
-local ToggleDragDetector = {}
-function ToggleDragDetector.IsMouseOverFrame(Frame, Position)
-    local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize
-    return Position.X >= AbsPos.X and Position.X <= AbsPos.X + AbsSize.X 
-        and Position.Y >= AbsPos.Y and Position.Y <= AbsPos.Y + AbsSize.Y
+local ab=a.load'c'
+local ac=ab.New
+local ad=ab.Tween
+
+local ae=game:GetService"UserInputService"
+
+function aa.New(af,ag,ah,ai,aj,ak,al)
+local am={
+GlassSpritesheet={
+Id="rbxassetid://77297718671545",
+MirroredId="rbxassetid://92258969882244",
+Size=Vector2.new(102,128),
+Total=80,
+Cols=10,
+}
+}
+
+function am.GetGlassFrame(an,ao:number):(string,Vector2,Vector2)
+local ap=am.GlassSpritesheet
+local aq:number
+
+if ao<=0.4 then
+aq=math.floor((ao/0.4)*(ap.Total-1))
+elseif ao<0.6 then
+aq=ap.Total-1
+else
+aq=math.floor(((ao-0.6)/0.4)*(ap.Total-1))
 end
-function ToggleDragDetector.MakeDraggable(ToggleFrame, ThumbFrame, SliderTrack, CallbackTable)
+
+aq=math.clamp(aq,0,ap.Total-1)
+
+local ar=ao>=0.6
+if ar then
+aq=(ap.Total-1)-aq
+end
+
+local as=ar and ap.MirroredId or ap.Id
+
+return as,
+ap.Size,
+Vector2.new(
+(aq%ap.Cols)*ap.Size.X,
+math.floor(aq/ap.Cols)*ap.Size.Y
+)
+end
+
+local an=12
+local ao
+if ag and ag~=""then
+ao=ac("ImageLabel",{
+Size=UDim2.new(0,13,0,13),
+BackgroundTransparency=1,
+AnchorPoint=Vector2.new(0.5,0.5),
+Position=UDim2.new(0.5,0,0.5,0),
+Image=ab.Icon(ag)[1],
+ImageRectOffset=ab.Icon(ag)[2].ImageRectPosition,
+ImageRectSize=ab.Icon(ag)[2].ImageRectSize,
+ImageTransparency=1,
+ImageColor3=Color3.new(0,0,0),
+})
+end
+
+local ap=ac("Frame",{
+Size=UDim2.new(0,2,0,26),
+BackgroundTransparency=1,
+Parent=ai,
+})
+
+local aq=ab.NewRoundFrame(an,"Squircle",{
+ImageTransparency=.85,
+ThemeTag={
+ImageColor3="Text"
+},
+Parent=ap,
+Size=UDim2.new(0,ak and(52)or(40.8),0,24),
+AnchorPoint=Vector2.new(1,0.5),
+Position=UDim2.new(0,0,0.5,0),
+Name="ToggleFrame",
+},{
+ab.NewRoundFrame(an,"Squircle",{
+Size=UDim2.new(1,0,1,0),
+Name="Layer",
+ThemeTag={
+ImageColor3="Toggle",
+},
+ImageTransparency=1,
+}),
+ab.NewRoundFrame(an,"SquircleOutline",{
+Size=UDim2.new(1,0,1,0),
+Name="Stroke",
+ImageColor3=Color3.new(1,1,1),
+ImageTransparency=1,
+},{
+ac("UIGradient",{
+Rotation=90,
+Transparency=NumberSequence.new{
+NumberSequenceKeypoint.new(0,0),
+NumberSequenceKeypoint.new(1,1),
+}
+})
+}),
+
+
+ab.NewRoundFrame(an,"Squircle",{
+Size=UDim2.new(0,ak and 30 or 20,0,20),
+Position=UDim2.new(0,2,0.5,0),
+AnchorPoint=Vector2.new(0,0.5),
+ImageTransparency=1,
+Name="Frame",
+},{
+ab.NewRoundFrame(an,"Squircle",{
+Size=UDim2.new(1,0,1,0),
+ImageTransparency=0,
+
+AnchorPoint=Vector2.new(0.5,0.5),
+Position=UDim2.new(0.5,0,0.5,0),
+Name="Bar"
+},{
+ab.NewRoundFrame(an,"Glass-1.4",{
+Size=UDim2.new(1,0,1,0),
+ImageColor3=Color3.new(1,1,1),
+Name="Highlight",
+ImageTransparency=1,
+},{
+
+
+
+
+
+
+
+
+
+
+
+
+
+ab.NewRoundFrame(an,"Squircle",{
+Size=UDim2.new(1,0,1,0),
+Name="GlassBackground",
+ImageTransparency=0,
+ThemeTag={
+ImageColor3="ElementBackground",
+},
+ZIndex=-1,
+}),
+ac("ImageLabel",{
+Size=UDim2.new(1,0,1,0),
+BackgroundTransparency=1,
+Name="Glass",
+ImageTransparency=0,
+},{
+ac("UICorner",{
+CornerRadius=UDim.new(1,0),
+})
+}),
+ab.NewRoundFrame(an,"Glass-1.4",{
+Size=UDim2.new(1,0,1,0),
+ImageColor3=Color3.new(1,1,1),
+Name="Highlight",
+ImageTransparency=0.3,
+}),
+ab.NewRoundFrame(an,"Squircle",{
+Size=UDim2.new(1,0,1,0),
+Name="BarOverlay",
+ThemeTag={
+ImageColor3="ToggleBar",
+},
+ZIndex=999,
+})
+}),
+ao,
+ac("UIScale",{
+Scale=1,
+})
+}),
+}),
+ac("TextButton",{
+Size=UDim2.new(1,0,1,0),
+BackgroundTransparency=1,
+Position=UDim2.new(0.5,0,0.5,0),
+AnchorPoint=Vector2.new(0.5,0.5),
+Name="Hitbox",
+Text="",
+})
+})
+
+local ar
+local as
+
+local at=ak and 30 or 20
+local au=aq.Size.X.Offset
+
+function am.Set(av,aw,ax,ay)
+if not ay then
+if aw then
+ad(aq.Frame,0.35,{
+Position=UDim2.new(0,au-at-2,0.5,0),
+},Enum.EasingStyle.Back,Enum.EasingDirection.Out):Play()
+ab.SetThemeTag(aq.Frame.Bar.Highlight.Glass,{ImageColor3="Toggle"},0.15)
+ad(aq.Frame.Bar.Highlight.Glass,0.15,{ImageTransparency=0},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+else
+ad(aq.Frame,0.35,{
+Position=UDim2.new(0,2,0.5,0),
+},Enum.EasingStyle.Back,Enum.EasingDirection.Out):Play()
+ab.SetThemeTag(aq.Frame.Bar.Highlight.Glass,{ImageColor3="Text"},0.15)
+ad(aq.Frame.Bar.Highlight.Glass,0.15,{ImageTransparency=0.85},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+end
+else
+if aw then
+aq.Frame.Position=UDim2.new(0,au-at-2,0.5,0)
+else
+aq.Frame.Position=UDim2.new(0,2,0.5,0)
+end
+end
+
+if aw then
+ad(aq.Layer,0.1,{
+ImageTransparency=0,
+}):Play()
+ab.SetThemeTag(aq.Frame.Bar.Highlight.Glass,{ImageColor3="Toggle"},0.1)
+ad(aq.Frame.Bar.Highlight.Glass,0.1,{ImageTransparency=0},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+
+if ao then
+ad(ao,0.1,{
+ImageTransparency=0,
+}):Play()
+end
+
+local az,aA,aB=am:GetGlassFrame(1)
+
+aq.Frame.Bar.Highlight.Glass.Image=az
+aq.Frame.Bar.Highlight.Glass.ImageRectSize=aA
+aq.Frame.Bar.Highlight.Glass.ImageRectOffset=aB
+else
+ad(aq.Layer,0.1,{
+ImageTransparency=1,
+}):Play()
+ab.SetThemeTag(aq.Frame.Bar.Highlight.Glass,{ImageColor3="Text"},0.1)
+ad(aq.Frame.Bar.Highlight.Glass,0.1,{ImageTransparency=0.85},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+
+if ao then
+ad(ao,0.1,{
+ImageTransparency=1,
+}):Play()
+end
+
+local az,aA,aB=am:GetGlassFrame(0)
+
+aq.Frame.Bar.Highlight.Glass.Image=az
+aq.Frame.Bar.Highlight.Glass.ImageRectSize=aA
+aq.Frame.Bar.Highlight.Glass.ImageRectOffset=aB
+end
+
+ax=ax~=false
+
+task.spawn(function()
+if aj and ax then
+ab.SafeCallback(aj,aw)
+end
+end)
+end
+
+
+local DraggingXPos = {}
+
+function DraggingXPos.GetDistance(pos1, pos2)
+    return math.abs(pos2.X - pos1.X)
+end
+
+function DraggingXPos.IsMouseOverFrame(Frame, Position)
+    local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize
+    return Position.X >= AbsPos.X and Position.X <= AbsPos.X + AbsSize.X and Position.Y >= AbsPos.Y and Position.Y <= AbsPos.Y + AbsSize.Y
+end
+
+function DraggingXPos.MakeToggleDraggable(ToggleFrame, ThumbFrame, CallbackTable)
     if not ToggleFrame or not ThumbFrame then return end
+    
     local dragging = false
     local dragStart = nil
-    local startThumbX = nil
+    local startOffset = nil
     local dragDistance = 0
     local DRAG_THRESHOLD = 8
-    local originalZIndex = ToggleFrame.ZIndex
     local isDraggingStarted = false
     local currentTouch = nil
     local isEnabled = false
+    
     local UserInputService = game:GetService("UserInputService")
-    local function getDragRange()
-        local trackWidth = SliderTrack.AbsoluteSize.X
-        local thumbWidth = ThumbFrame.AbsoluteSize.X
-        return trackWidth - thumbWidth
-    end
-    local function getValueFromPosition(position)
-        local trackPos = SliderTrack.AbsolutePosition.X
-        local trackWidth = SliderTrack.AbsoluteSize.X
-        local thumbWidth = ThumbFrame.AbsoluteSize.X
-        local maxDrag = trackWidth - thumbWidth
-        local thumbX = position.X - trackPos
-        if thumbX <= 0 then
-            return 0
-        elseif thumbX >= maxDrag then
-            return 1
-        else
-            return thumbX / maxDrag
+    local RunService = game:GetService("RunService")
+    
+    local trackMin = 2
+    local trackMax = 0
+    local thumbSize = 0
+    
+    local function updateTrackBounds()
+        if ToggleFrame and ToggleFrame.AbsoluteSize then
+            thumbSize = ThumbFrame.AbsoluteSize.X
+            trackMax = ToggleFrame.AbsoluteSize.X - thumbSize - 2
+            trackMin = 2
         end
     end
-    local function updateThumbPosition(value, animate)
-        local maxDrag = getDragRange()
-        local newX = value * maxDrag
-        if animate then
-            ac(ThumbFrame, 0.2, {
-                Position = UDim2.new(0, newX, 0.5, 0)
-            }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
-        else
-            ThumbFrame.Position = UDim2.new(0, newX, 0.5, 0)
-        end
+    
+    local function getNormalizedPosition(offset)
+        return math.clamp((offset - trackMin) / (trackMax - trackMin), 0, 1)
     end
-    local function updateVisualState(enabled, animate)
-        if enabled then
-            if animate then
-                ac(SliderTrack, 0.15, { ImageTransparency = 0 }):Play()
-                ac(ToggleFrame.Layer, 0.15, { ImageTransparency = 0 }):Play()
-                if ToggleFrame.Frame.Bar.Highlight.Glass then
-                    ac(ToggleFrame.Frame.Bar.Highlight.Glass, 0.15, { ImageTransparency = 0 }):Play()
-                end
-                if ToggleFrame.Frame.Bar.Icon then
-                    ac(ToggleFrame.Frame.Bar.Icon, 0.15, { ImageTransparency = 0 }):Play()
-                end
-            else
-                SliderTrack.ImageTransparency = 0
-                ToggleFrame.Layer.ImageTransparency = 0
-                if ToggleFrame.Frame.Bar.Highlight.Glass then
-                    ToggleFrame.Frame.Bar.Highlight.Glass.ImageTransparency = 0
-                end
-                if ToggleFrame.Frame.Bar.Icon then
-                    ToggleFrame.Frame.Bar.Icon.ImageTransparency = 0
-                end
-            end
-        else
-            if animate then
-                ac(SliderTrack, 0.15, { ImageTransparency = 1 }):Play()
-                ac(ToggleFrame.Layer, 0.15, { ImageTransparency = 1 }):Play()
-                if ToggleFrame.Frame.Bar.Highlight.Glass then
-                    ac(ToggleFrame.Frame.Bar.Highlight.Glass, 0.15, { ImageTransparency = 0.85 }):Play()
-                end
-                if ToggleFrame.Frame.Bar.Icon then
-                    ac(ToggleFrame.Frame.Bar.Icon, 0.15, { ImageTransparency = 1 }):Play()
-                end
-            else
-                SliderTrack.ImageTransparency = 1
-                ToggleFrame.Layer.ImageTransparency = 1
-                if ToggleFrame.Frame.Bar.Highlight.Glass then
-                    ToggleFrame.Frame.Bar.Highlight.Glass.ImageTransparency = 0.85
-                end
-                if ToggleFrame.Frame.Bar.Icon then
-                    ToggleFrame.Frame.Bar.Icon.ImageTransparency = 1
-                end
+    
+    local function updateThumbPosition(offset)
+        if ToggleFrame and ThumbFrame then
+            ThumbFrame.Position = UDim2.new(0, math.clamp(offset, trackMin, trackMax), 0.5, 0)
+            if CallbackTable and CallbackTable.OnPositionUpdate then
+                local normalized = getNormalizedPosition(offset)
+                CallbackTable.OnPositionUpdate(normalized, offset)
             end
         end
     end
-    local function updatePosition(input)
-        if not dragging or not dragStart then return end
-        local deltaX = input.Position.X - dragStart.X
-        dragDistance = math.abs(deltaX)
-        local trackPos = SliderTrack.AbsolutePosition.X
-        local trackWidth = SliderTrack.AbsoluteSize.X
-        local thumbWidth = ThumbFrame.AbsoluteSize.X
-        local maxDrag = trackWidth - thumbWidth
-        local newThumbX = math.clamp(startThumbX + deltaX, 0, maxDrag)
-        local newValue = newThumbX / maxDrag
-        ThumbFrame.Position = UDim2.new(0, newThumbX, 0.5, 0)
-        if newValue > 0.5 then
-            SliderTrack.ImageTransparency = 0
-            ToggleFrame.Layer.ImageTransparency = 0
+    
+    local function setToggleState(enabled, instant)
+        isEnabled = enabled
+        local targetOffset = enabled and trackMax or trackMin
+        if instant then
+            updateThumbPosition(targetOffset)
         else
-            SliderTrack.ImageTransparency = 1
-            ToggleFrame.Layer.ImageTransparency = 1
+            local tweenService = game:GetService("TweenService")
+            local tween = tweenService:Create(ThumbFrame, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                Position = UDim2.new(0, targetOffset, 0.5, 0)
+            })
+            tween:Play()
         end
-        if CallbackTable and CallbackTable.OnDragUpdate then
-            CallbackTable.OnDragUpdate(newValue, dragDistance)
+        if CallbackTable and CallbackTable.OnStateChange then
+            CallbackTable.OnStateChange(enabled)
         end
     end
+    
     local function resetDragState()
         dragging = false
         dragStart = nil
-        startThumbX = nil
+        startOffset = nil
         dragDistance = 0
         isDraggingStarted = false
         currentTouch = nil
     end
+    
     local mouseButton1Connection = nil
     local touchEndedConnection = nil
     local movementConnection = nil
+    local renderSteppedConnection = nil
+    
     local function onInputEnded()
         if dragging then
             local wasDragged = dragDistance > DRAG_THRESHOLD
-            local finalValue = false
             if wasDragged and isDraggingStarted then
-                local currentX = ThumbFrame.Position.X.Offset
-                local maxDrag = getDragRange()
-                local currentValue = currentX / maxDrag
-                finalValue = currentValue > 0.5
-                ToggleFrame.ZIndex = originalZIndex
+                local currentOffset = ThumbFrame.Position.X.Offset
+                local centerThreshold = (trackMax + trackMin) / 2
+                local newState = currentOffset > centerThreshold
+                setToggleState(newState, false)
                 if CallbackTable and CallbackTable.OnDragEnd then
-                    CallbackTable.OnDragEnd(finalValue, wasDragged)
+                    CallbackTable.OnDragEnd(newState, wasDragged)
                 end
-                local targetX = finalValue and maxDrag or 0
-                ac(ThumbFrame, 0.25, {
-                    Position = UDim2.new(0, targetX, 0.5, 0)
-                }, Enum.EasingStyle.Back, Enum.EasingDirection.Out):Play()
-                updateVisualState(finalValue, true)
             elseif not wasDragged and CallbackTable and CallbackTable.OnClick then
                 CallbackTable.OnClick()
             end
             resetDragState()
-            if mouseButton1Connection then
-                mouseButton1Connection:Disconnect()
-                mouseButton1Connection = nil
-            end
-            if touchEndedConnection then
-                touchEndedConnection:Disconnect()
-                touchEndedConnection = nil
-            end
-            if movementConnection then
-                movementConnection:Disconnect()
-                movementConnection = nil
-            end
+            if mouseButton1Connection then mouseButton1Connection:Disconnect() mouseButton1Connection = nil end
+            if touchEndedConnection then touchEndedConnection:Disconnect() touchEndedConnection = nil end
+            if movementConnection then movementConnection:Disconnect() movementConnection = nil end
+            if renderSteppedConnection then renderSteppedConnection:Disconnect() renderSteppedConnection = nil end
         end
     end
+    
     local function onInputEndedHandler(endInput)
         if dragging then
             if endInput.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -6425,35 +6629,45 @@ function ToggleDragDetector.MakeDraggable(ToggleFrame, ThumbFrame, SliderTrack, 
             end
         end
     end
+    
     local function onMovement(input)
         if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input == currentTouch) then
+            updateTrackBounds()
             local currentDeltaX = math.abs(input.Position.X - dragStart.X)
             if not isDraggingStarted and currentDeltaX > DRAG_THRESHOLD then
                 isDraggingStarted = true
-                ToggleFrame.ZIndex = 110
                 if CallbackTable and CallbackTable.OnDragStart then
                     CallbackTable.OnDragStart()
                 end
             end
-            updatePosition(input)
+            if isDraggingStarted then
+                local deltaX = input.Position.X - dragStart.X
+                dragDistance = math.abs(deltaX)
+                local newOffset = math.clamp(startOffset + deltaX, trackMin, trackMax)
+                updateThumbPosition(newOffset)
+                if CallbackTable and CallbackTable.OnDragging then
+                    local normalized = getNormalizedPosition(newOffset)
+                    CallbackTable.OnDragging(normalized, newOffset)
+                end
+            end
         end
     end
+    
     local function onInputBegan(input)
-        if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) 
-            and input.UserInputState == Enum.UserInputState.Begin and not dragging then
-            if ToggleDragDetector.IsMouseOverFrame(ThumbFrame, input.Position) or 
-               ToggleDragDetector.IsMouseOverFrame(ToggleFrame, input.Position) then
+        if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and input.UserInputState == Enum.UserInputState.Begin and not dragging then
+            if DraggingXPos.IsMouseOverFrame(ThumbFrame, input.Position) then
                 dragging = true
                 dragStart = input.Position
-                startThumbX = ThumbFrame.Position.X.Offset
+                startOffset = ThumbFrame.Position.X.Offset
                 dragDistance = 0
                 isDraggingStarted = false
+                updateTrackBounds()
                 if input.UserInputType == Enum.UserInputType.Touch then
                     currentTouch = input
                 else
                     currentTouch = nil
                 end
-                ac(ThumbFrame.UIScale, 0.1, { Scale = 1.2 }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
+                
                 mouseButton1Connection = UserInputService.InputEnded:Connect(function(endInput)
                     if endInput.UserInputType == Enum.UserInputType.MouseButton1 then
                         onInputEndedHandler(endInput)
@@ -6469,241 +6683,358 @@ function ToggleDragDetector.MakeDraggable(ToggleFrame, ThumbFrame, SliderTrack, 
                         onMovement(moveInput)
                     end
                 end)
+                renderSteppedConnection = RunService.RenderStepped:Connect(function()
+                    if dragging then
+                        updateTrackBounds()
+                    end
+                end)
             end
         end
     end
-    local inputBeganConnection = ToggleFrame.InputBegan:Connect(onInputBegan)
-    local function SetEnabled(enabled, animate)
-        isEnabled = enabled
-        local maxDrag = getDragRange()
-        local targetX = enabled and maxDrag or 0
-        if animate then
-            ac(ThumbFrame, 0.3, {
-                Position = UDim2.new(0, targetX, 0.5, 0)
-            }, Enum.EasingStyle.Back, Enum.EasingDirection.Out):Play()
-            updateVisualState(enabled, true)
-        else
-            ThumbFrame.Position = UDim2.new(0, targetX, 0.5, 0)
-            updateVisualState(enabled, false)
-        end
+    
+    local inputBeganConnection = ThumbFrame.InputBegan:Connect(onInputBegan)
+    
+    local function SetState(enabled, instant)
+        setToggleState(enabled, instant)
     end
-    local function GetEnabled()
+    
+    local function GetState()
         return isEnabled
     end
-    local function GetValue()
-        local currentX = ThumbFrame.Position.X.Offset
-        local maxDrag = getDragRange()
-        return currentX / maxDrag
+    
+    local function UpdateBounds()
+        updateTrackBounds()
     end
+    
     local cleanupFunction = function()
         inputBeganConnection:Disconnect()
         if mouseButton1Connection then mouseButton1Connection:Disconnect() end
         if touchEndedConnection then touchEndedConnection:Disconnect() end
         if movementConnection then movementConnection:Disconnect() end
-        if isDraggingStarted then
-            ToggleFrame.ZIndex = originalZIndex
-        end
+        if renderSteppedConnection then renderSteppedConnection:Disconnect() end
     end
-    return cleanupFunction, SetEnabled, GetEnabled, GetValue
+    
+    updateTrackBounds()
+    
+    return cleanupFunction, SetState, GetState, UpdateBounds
 end
-local af={}
-function af.New(ag,ah)
-    local ai={
-        __type="Toggle",
-        Title=ah.Title or"Toggle",
-        Desc=ah.Desc or nil,
-        Locked=ah.Locked or false,
-        LockedTitle=ah.LockedTitle,
-        Value=ah.Value,
-        Icon=ah.Icon or nil,
-        IconSize=ah.IconSize or 23,
-        Type=ah.Type or"Toggle",
-        Callback=ah.Callback or function()end,
-        UIElements={}
-    }
-    ai.ToggleFrame=a.load'B'{
-        Title=ai.Title,
-        Desc=ai.Desc,
-        Window=ah.Window,
-        Parent=ah.Parent,
-        TextOffset=(52),
-        Hover=false,
-        Tab=ah.Tab,
-        Index=ah.Index,
-        ElementTable=ai,
-        ParentConfig=ah,
-    }
-    local aj=true
-    if ai.Value==nil then
-        ai.Value=false
-    end
-    function ai.Lock(ak)
-        ai.Locked=true
-        aj=false
-        return ai.ToggleFrame:Lock(ai.LockedTitle)
-    end
-    function ai.Unlock(ak)
-        ai.Locked=false
-        aj=true
-        return ai.ToggleFrame:Unlock()
-    end
-    if ai.Locked then
-        ai:Lock()
-    end
-    local ak=ai.Value
-    local al=12
-    local am
-    if ai.Icon then
-        am=aa.Image(
-            ai.Icon,
-            ai.Icon,
-            0,
-            ah.Window.Folder,
-            "ToggleIcon",
-            true,
-            false,
-            "ToggleIcon"
-        )
-        am.Size=UDim2.new(0,ai.IconSize,0,ai.IconSize)
-        am.AnchorPoint=Vector2.new(0.5,0.5)
-        am.Position=UDim2.new(0.5,0,0.5,0)
-    end
-    local an=aa.NewRoundFrame(al,"Squircle",{
-        ImageTransparency=.85,
-        ThemeTag={
-            ImageColor3="Text"
-        },
-        Parent=ai.ToggleFrame.UIElements.Main,
-        Size=UDim2.new(0,52,0,26),
-        AnchorPoint=Vector2.new(1,ah.Window.NewElements and 0 or 0.5),
-        Position=UDim2.new(1,0,ah.Window.NewElements and 0 or 0.5,0),
-    },{
-        aa.NewRoundFrame(al,"Squircle",{
-            Size=UDim2.new(1,0,1,0),
-            Name="Layer",
-            ThemeTag={
-                ImageColor3="Toggle",
-            },
-            ImageTransparency=1,
-        }),
-        aa.NewRoundFrame(al,"Squircle",{
-            Size=UDim2.new(1,0,1,0),
-            Name="SliderTrack",
-            ThemeTag={
-                ImageColor3="Toggle",
-            },
-            ImageTransparency=1,
-        }),
-        aa.NewRoundFrame(al,"Glass-1.4",{
-            Size=UDim2.new(1,0,1,0),
-            Name="Stroke",
-            ThemeTag={
-                ImageColor3="CheckboxBorder",
-                ImageTransparency="CheckboxBorderTransparency",
-            },
-        }),
-        aa.NewRoundFrame(al,"Squircle",{
-            Size=UDim2.new(0,20,0,20),
-            Position=UDim2.new(ai.Value and 26 or 2,0,0.5,0),
-            AnchorPoint=Vector2.new(0,0.5),
-            Name="Thumb",
-        },{
-            aa.NewRoundFrame(al,"Squircle",{
-                Size=UDim2.new(1,0,1,0),
-                Name="Bar",
-                ThemeTag={
-                    ImageColor3="ToggleBar",
-                },
-                ImageTransparency=1,
-            }),
-            am,
-            aa("UIScale",{
-                Scale=1,
-            }),
-        }),
-    },true)
-    local toggleFrame = an
-    local thumbFrame = an.Thumb
-    local sliderTrack = an.SliderTrack
-    local dragCallbacks = {
-        OnDragStart = function()
-            ac(thumbFrame.UIScale, 0.1, { Scale = 1.2 }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
-        end,
-        OnDragUpdate = function(value, dragDistance)
-        end,
-        OnDragEnd = function(finalValue, wasDragged)
-            ac(thumbFrame.UIScale, 0.2, { Scale = 1 }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
-            if wasDragged then
-                ai.Value = finalValue
-                ak = finalValue
-                aa.SafeCallback(ai.Callback, finalValue)
+
+function am.Animate(av, aw, ax)
+    if not al.Window.IsToggleDragging then
+        al.Window.IsToggleDragging = true
+        
+        local ay = aw.Position.X
+        local az = aw.Position.Y
+        local aA = aq.Frame.Position.X.Offset
+        local aB = false
+        local b = false
+        
+        ad(aq.Frame.Bar.UIScale, 0.28, {Scale = 1.5}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
+        ad(aq.Frame.Bar.Highlight.BarOverlay, 0.28, {ImageTransparency = 0.86}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
+        
+        if ar then ar:Disconnect() end
+        
+        ar = ae.InputChanged:Connect(function(d)
+            if not al.Window.IsToggleDragging then return end
+            if d.UserInputType ~= Enum.UserInputType.MouseMovement and d.UserInputType ~= Enum.UserInputType.Touch then return end
+            if aB then return end
+            
+            local f = math.abs(d.Position.X - ay)
+            math.abs(d.Position.Y - az)
+            
+            if not b and f > 8 then
+                b = true
             end
-        end,
-        OnClick = function()
-            local newValue = not ai.Value
-            ai:Set(newValue, true)
-        end
-    }
-    local dragCleanup, setToggleEnabled, getToggleEnabled, getToggleValue = ToggleDragDetector.MakeDraggable(
-        toggleFrame,
-        thumbFrame,
-        sliderTrack,
-        dragCallbacks
-    )
-    function ai.Set(an, ao, ap)
-        if aj then
-            if setToggleEnabled then
-                setToggleEnabled(an, ap)
+            
+            local g = d.Position.X - ay
+            local h = math.max(2, math.min(aA + g, au - at - 2))
+            
+            local j = math.clamp((h - 2) / (au - at - 4), 0, 1)
+            
+            local l, m, p = am:GetGlassFrame(j)
+            aq.Frame.Bar.Highlight.Glass.Image = l
+            aq.Frame.Bar.Highlight.Glass.ImageRectSize = m
+            aq.Frame.Bar.Highlight.Glass.ImageRectOffset = p
+            
+            ad(aq.Frame, 0.12, {
+                Position = UDim2.new(0, h, 0.5, 0)
+            }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
+        end)
+        
+        if as then as:Disconnect() end
+        
+        as = ae.InputEnded:Connect(function(d)
+            if not al.Window.IsToggleDragging then return end
+            if d.UserInputType ~= Enum.UserInputType.MouseButton1 and d.UserInputType ~= Enum.UserInputType.Touch then return end
+            
+            al.Window.IsToggleDragging = false
+            
+            if ar then ar:Disconnect() ar = nil end
+            if as then as:Disconnect() as = nil end
+            
+            if aB then return end
+            
+            if not b then
+                ax:Set(not ax.Value, true, false)
             else
-                local targetX = an and 26 or 2
-                ac(thumbFrame, 0.3, {
-                    Position = UDim2.new(0, targetX, 0.5, 0)
-                }, Enum.EasingStyle.Back, Enum.EasingDirection.Out):Play()
-                if an then
-                    ac(toggleFrame.Layer, 0.1, { ImageTransparency = 0 }):Play()
-                    ac(sliderTrack, 0.1, { ImageTransparency = 0 }):Play()
-                else
-                    ac(toggleFrame.Layer, 0.1, { ImageTransparency = 1 }):Play()
-                    ac(sliderTrack, 0.1, { ImageTransparency = 1 }):Play()
-                end
+                local f = aq.Frame.Position.X.Offset
+                local g = f + at / 2
+                local h = g > au / 2
+                ax:Set(h, true, false)
             end
-            ai.Value = an
-            ak = an
-            if ao ~= false then
-                aa.SafeCallback(ai.Callback, an)
-            end
-        end
+            
+            ad(aq.Frame.Bar.UIScale, 0.23, {Scale = 1}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
+            ad(aq.Frame.Bar.Highlight.BarOverlay, 0.23, {ImageTransparency = 0}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
+        end)
     end
-    ai:Set(ak, false, true)
-    local originalDestroy = ai.Destroy
-    function ai.Destroy(...)
-        if dragCleanup then
-            dragCleanup()
-        end
-        if originalDestroy then
-            return originalDestroy(...)
-        end
-    end
-    return ai.__type, ai
 end
+
+return ap, am
+end
+
+return aa end function a.F()
+local aa={}
+
+local ab=a.load'c'local ac=
+ab.New
+local ad=ab.Tween
+
+
+function aa.New(ae,af,ag,ah,ai,aj)
+local ak={}
+
+af=af or"sfsymbols:checkmark"
+
+local al=9
+
+local am=ab.Image(
+af,
+af,
+0,
+(aj and aj.Window.Folder or"Temp"),
+"Checkbox",
+true,
+false,
+"CheckboxIcon"
+)
+am.Size=UDim2.new(1,-26+ag,1,-26+ag)
+am.AnchorPoint=Vector2.new(0.5,0.5)
+am.Position=UDim2.new(0.5,0,0.5,0)
+
+
+local an=ab.NewRoundFrame(al,"Squircle",{
+ImageTransparency=.85,
+ThemeTag={
+ImageColor3="Text"
+},
+Parent=ah,
+Size=UDim2.new(0,26,0,26),
+},{
+ab.NewRoundFrame(al,"Squircle",{
+Size=UDim2.new(1,0,1,0),
+Name="Layer",
+ThemeTag={
+ImageColor3="Checkbox",
+},
+ImageTransparency=1,
+}),
+ab.NewRoundFrame(al,"Glass-1.4",{
+Size=UDim2.new(1,0,1,0),
+Name="Stroke",
+ThemeTag={
+ImageColor3="CheckboxBorder",
+ImageTransparency="CheckboxBorderTransparency",
+},
+},{
+
+
+
+
+
+
+
+}),
+
+am,
+},true)
+
+function ak.Set(ao,ap)
+if ap then
+ad(an.Layer,0.06,{
+ImageTransparency=0,
+}):Play()
+
+
+
+ad(am.ImageLabel,0.06,{
+ImageTransparency=0,
+}):Play()
+else
+ad(an.Layer,0.05,{
+ImageTransparency=1,
+}):Play()
+
+
+
+ad(am.ImageLabel,0.06,{
+ImageTransparency=1,
+}):Play()
+end
+
+task.spawn(function()
+if ai then
+ab.SafeCallback(ai,ap)
+end
+end)
+end
+
+return an,ak
+end
+
+
+return aa end function a.G()
+local aa=a.load'c'local ab=
+aa.New local ac=
+aa.Tween
+
+local ad=a.load'E'.New
+local ae=a.load'F'.New
+
+local af={}
+
+function af.New(ag,ah)
+local ai={
+__type="Toggle",
+Title=ah.Title or"Toggle",
+Desc=ah.Desc or nil,
+Locked=ah.Locked or false,
+LockedTitle=ah.LockedTitle,
+Value=ah.Value,
+Icon=ah.Icon or nil,
+IconSize=ah.IconSize or 23,
+Type=ah.Type or"Toggle",
+Callback=ah.Callback or function()end,
+UIElements={}
+}
+ai.ToggleFrame=a.load'B'{
+Title=ai.Title,
+Desc=ai.Desc,
+
+
+
+
+Window=ah.Window,
+Parent=ah.Parent,
+TextOffset=(52),
+Hover=false,
+Tab=ah.Tab,
+Index=ah.Index,
+ElementTable=ai,
+ParentConfig=ah,
+}
+
+local aj=true
+
+if ai.Value==nil then
+ai.Value=false
+end
+
+
+
+function ai.Lock(ak)
+ai.Locked=true
+aj=false
+return ai.ToggleFrame:Lock(ai.LockedTitle)
+end
+function ai.Unlock(ak)
+ai.Locked=false
+aj=true
+return ai.ToggleFrame:Unlock()
+end
+
+if ai.Locked then
+ai:Lock()
+end
+
+local ak=ai.Value
+
+local al,am
+if ai.Type=="Toggle"then
+al,am=ad(ak,ai.Icon,ai.IconSize,ai.ToggleFrame.UIElements.Main,ai.Callback,ah.Window.NewElements,ah)
+elseif ai.Type=="Checkbox"then
+al,am=ae(ak,ai.Icon,ai.IconSize,ai.ToggleFrame.UIElements.Main,ai.Callback,ah)
+else
+error("Unknown Toggle Type: "..tostring(ai.Type))
+end
+
+al.AnchorPoint=Vector2.new(1,ah.Window.NewElements and 0 or 0.5)
+al.Position=UDim2.new(1,0,ah.Window.NewElements and 0 or 0.5,0)
+
+function ai.Set(an,ao,ap,aq)
+if aj then
+am:Set(ao,ap,aq or false)
+ak=ao
+ai.Value=ao
+end
+end
+
+ai:Set(ak,false,ah.Window.NewElements)
+
+
+if ah.Window.NewElements and am.Animate then
+if ai.Type=="Toggle"then
+aa.AddSignal(al.ToggleFrame.Hitbox.InputBegan,function(an)
+if not ah.Window.IsToggleDragging and an.UserInputType==Enum.UserInputType.MouseButton1 or an.UserInputType==Enum.UserInputType.Touch then
+am:Animate(an,ai)
+end
+end)
+end
+
+
+
+
+
+else
+if ai.Type=="Toggle"then
+aa.AddSignal(al.ToggleFrame.Hitbox.MouseButton1Click,function()
+ai:Set(not ai.Value,nil,ah.Window.NewElements)
+end)
+elseif ai.Type=="Checkbox"then
+aa.AddSignal(al.MouseButton1Click,function()
+ai:Set(not ai.Value,nil,ah.Window.NewElements)
+end)
+end
+end
+
+return ai.__type,ai
+end
+
 return af end function a.H()
 local aa=(cloneref or clonereference or function(aa)return aa end)
+
 local ac=aa(game:GetService"UserInputService")
 local ad=aa(game:GetService"RunService")
+
 local ae=a.load'c'
 local af=ae.New
 local ag=ae.Tween
+
+-- Embedded DraggingXPos functionality
 local DraggingXPos = {}
+
 function DraggingXPos.GetDistance(pos1, pos2)
     return math.abs(pos2.X - pos1.X)
 end
+
 function DraggingXPos.IsMouseOverFrame(Frame, Position)
     local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize
     return Position.X >= AbsPos.X and Position.X <= AbsPos.X + AbsSize.X 
         and Position.Y >= AbsPos.Y and Position.Y <= AbsPos.Y + AbsSize.Y
 end
+
 function DraggingXPos.MakeDraggable(MainFrame, DragFrame, CallbackTable)
     if not MainFrame or not DragFrame then return end
+    
     local dragging = false
     local dragStart = nil
     local startPos = nil
@@ -6713,30 +7044,41 @@ function DraggingXPos.MakeDraggable(MainFrame, DragFrame, CallbackTable)
     local isDraggingStarted = false
     local currentTouch = nil
     local isResizing = false
+    
     local UserInputService = game:GetService("UserInputService")
+    
     local function getScreenSize()
         return workspace.CurrentCamera.ViewportSize
     end
+    
     local function updatePosition(input)
         if not dragging or not dragStart or isResizing then return end
+        
         local deltaX = input.Position.X - dragStart.X
         dragDistance = math.abs(deltaX)
+        
         local screenSize = getScreenSize()
+        
         local newOffsetX = startPos.X.Offset + deltaX
         local newScaleX = startPos.X.Scale
+        
         local newOffsetY = startPos.Y.Offset
         local newScaleY = startPos.Y.Scale
+        
         if startPos.X.Scale > 0 then
             local scaleOffsetX = (screenSize.X * startPos.X.Scale) + startPos.X.Offset
             local newAbsoluteX = scaleOffsetX + deltaX
             newScaleX = newAbsoluteX / screenSize.X
             newOffsetX = 0
         end
+        
         MainFrame.Position = UDim2.new(newScaleX, newOffsetX, newScaleY, newOffsetY)
+        
         if CallbackTable and CallbackTable.OnDragUpdate then
             CallbackTable.OnDragUpdate(MainFrame.Position, dragDistance)
         end
     end
+    
     local function resetDragState()
         dragging = false
         dragStart = nil
@@ -6745,9 +7087,11 @@ function DraggingXPos.MakeDraggable(MainFrame, DragFrame, CallbackTable)
         isDraggingStarted = false
         currentTouch = nil
     end
+    
     local mouseButton1Connection = nil
     local touchEndedConnection = nil
     local movementConnection = nil
+    
     local function onInputEnded()
         if dragging then
             local wasDragged = dragDistance > DRAG_THRESHOLD
@@ -6775,6 +7119,7 @@ function DraggingXPos.MakeDraggable(MainFrame, DragFrame, CallbackTable)
             end
         end
     end
+    
     local function onInputEndedHandler(endInput)
         if dragging then
             if endInput.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -6784,6 +7129,7 @@ function DraggingXPos.MakeDraggable(MainFrame, DragFrame, CallbackTable)
             end
         end
     end
+    
     local function onMovement(input)
         if dragging and not isResizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input == currentTouch) then
             local currentDeltaX = math.abs(input.Position.X - dragStart.X)
@@ -6797,6 +7143,7 @@ function DraggingXPos.MakeDraggable(MainFrame, DragFrame, CallbackTable)
             updatePosition(input)
         end
     end
+    
     local function onInputBegan(input)
         if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) 
             and input.UserInputState == Enum.UserInputState.Begin and not dragging and not isResizing then
@@ -6811,6 +7158,7 @@ function DraggingXPos.MakeDraggable(MainFrame, DragFrame, CallbackTable)
                 else
                     currentTouch = nil
                 end
+                
                 mouseButton1Connection = UserInputService.InputEnded:Connect(function(endInput)
                     if endInput.UserInputType == Enum.UserInputType.MouseButton1 then
                         onInputEndedHandler(endInput)
@@ -6829,10 +7177,13 @@ function DraggingXPos.MakeDraggable(MainFrame, DragFrame, CallbackTable)
             end
         end
     end
+    
     local inputBeganConnection = DragFrame.InputBegan:Connect(onInputBegan)
+    
     local function SetResizing(value)
         isResizing = value
     end
+    
     local cleanupFunction = function()
         inputBeganConnection:Disconnect()
         if mouseButton1Connection then mouseButton1Connection:Disconnect() end
@@ -6842,10 +7193,13 @@ function DraggingXPos.MakeDraggable(MainFrame, DragFrame, CallbackTable)
             MainFrame.ZIndex = originalZIndex
         end
     end
+    
     return cleanupFunction, SetResizing
 end
+
 local ah={}
 local ai=false
+
 function ah.New(aj,ak)
     local al={
         __type="Slider",
@@ -6861,11 +7215,13 @@ function ah.New(aj,ak)
         Callback=ak.Callback or function()end,
         UIElements={},
         IsFocusing=false,
+
         Width=ak.Width or 130,
         TextBoxWidth=ak.Window.NewElements and 40 or 30,
         ThumbSize=13,
         IconSize=26,
     }
+    
     if al.Icons=={}then
         al.Icons={
             From="sfsymbols:sunMinFill",
@@ -6873,20 +7229,25 @@ function ah.New(aj,ak)
         }
     end
     if al.IsTextbox==nil and al.Title==nil then al.IsTextbox=false else al.IsTextbox=al.IsTextbox~=false end
+
     local am
     local an
     local ao
     local ap=al.Value.Default or al.Value.Min or 0
+
     local aq=ap
     local ar=(ap-(al.Value.Min or 0))/((al.Value.Max or 100)-(al.Value.Min or 0))
+
     local as=true
     local at=al.Step%1~=0
+
     local function FormatValue(au)
         if at then
             return tonumber(string.format("%.2f",au))
         end
         return math.floor(au+0.5)
     end
+
     local function CalculateValue(au)
         if at then
             return math.floor(au/al.Step+0.5)*al.Step
@@ -6894,6 +7255,7 @@ function ah.New(aj,ak)
             return math.floor(au/al.Step+0.5)*al.Step
         end
     end
+
     local au,av
     local aw=32
     if al.Icons then
@@ -6926,6 +7288,7 @@ function ah.New(aj,ak)
             aw=aw+al.IconSize-2
         end
     end
+    
     al.SliderFrame=a.load'B'{
         Title=al.Title,
         Desc=al.Desc,
@@ -6938,6 +7301,7 @@ function ah.New(aj,ak)
         ElementTable=al,
         ParentConfig=ak,
     }
+
     al.UIElements.SliderIcon=ae.NewRoundFrame(99,"Squircle",{
         ImageTransparency=.95,
         Size=UDim2.new(1,not al.IsTextbox and-aw or(-al.TextBoxWidth-8),0,4),
@@ -6974,6 +7338,7 @@ function ah.New(aj,ak)
             })
         })
     })
+
     al.UIElements.SliderContainer=af("Frame",{
         Size=UDim2.new(al.Title==nil and 1 or 0,al.Title==nil and 0 or al.Width,0,0),
         AutomaticSize="Y",
@@ -7007,12 +7372,14 @@ function ah.New(aj,ak)
             Visible=al.IsTextbox,
         })
     })
+
     local ax
     if al.IsTooltip then
         ax=a.load'A'.New(ap,al.UIElements.SliderIcon.Frame.Thumb,true,"Secondary","Small",false)
         ax.Container.AnchorPoint=Vector2.new(0.5,1)
         ax.Container.Position=UDim2.new(0.5,0,0,-8)
     end
+
     function al.Lock(ay)
         al.Locked=true
         as=false
@@ -7023,10 +7390,14 @@ function ah.New(aj,ak)
         as=true
         return al.SliderFrame:Unlock()
     end
+
     if al.Locked then
         al:Lock()
     end
+
     local ay=ak.Tab.UIElements.ContainerFrame
+
+    -- Create callback table for drag detector
     local dragCallbacks = {
         OnDragStart = function()
             if ak.Window.NewElements then
@@ -7044,6 +7415,7 @@ function ah.New(aj,ak)
             local d = math.clamp((currentX - al.UIElements.SliderIcon.AbsolutePosition.X) / al.UIElements.SliderIcon.AbsoluteSize.X, 0, 1)
             local aA = CalculateValue(al.Value.Min + d * (al.Value.Max - al.Value.Min))
             aA = math.clamp(aA, al.Value.Min or 0, al.Value.Max or 100)
+
             if aA ~= aq then
                 ag(al.UIElements.SliderIcon.Frame, 0.05, { Size = UDim2.new(d, 0, 1, 0) }):Play()
                 al.UIElements.SliderContainer.TextBox.Text = FormatValue(aA)
@@ -7067,13 +7439,17 @@ function ah.New(aj,ak)
             if ax then ax:Close(false) end
         end,
         OnClick = function()
+            -- Single click handling (optional)
         end
     }
+
+    -- Store cleanup function and setResizing
     local dragCleanup, setResizing = DraggingXPos.MakeDraggable(
         al.UIElements.SliderIcon,
         al.UIElements.SliderIcon.Frame.Thumb,
         dragCallbacks
     )
+
     function al.Set(az, aA, aB)
         if as then
             if not al.IsFocusing and not ai and (not aB or (aB.UserInputType == Enum.UserInputType.MouseButton1 or aB.UserInputType == Enum.UserInputType.Touch)) then
@@ -7081,6 +7457,7 @@ function ah.New(aj,ak)
                     local d = math.clamp((aB.Position.X - al.UIElements.SliderIcon.AbsolutePosition.X) / al.UIElements.SliderIcon.AbsoluteSize.X, 0, 1)
                     aA = CalculateValue(al.Value.Min + d * (al.Value.Max - al.Value.Min))
                     aA = math.clamp(aA, al.Value.Min or 0, al.Value.Max or 100)
+
                     if aA ~= aq then
                         ag(al.UIElements.SliderIcon.Frame, 0.05, { Size = UDim2.new(d, 0, 1, 0) }):Play()
                         al.UIElements.SliderContainer.TextBox.Text = FormatValue(aA)
@@ -7093,6 +7470,7 @@ function ah.New(aj,ak)
                     aA = math.clamp(aA, al.Value.Min or 0, al.Value.Max or 100)
                     local d = math.clamp((aA - (al.Value.Min or 0)) / ((al.Value.Max or 100) - (al.Value.Min or 0)), 0, 1)
                     aA = CalculateValue(al.Value.Min + d * (al.Value.Max - al.Value.Min))
+
                     if aA ~= aq then
                         ag(al.UIElements.SliderIcon.Frame, 0.05, { Size = UDim2.new(d, 0, 1, 0) }):Play()
                         al.UIElements.SliderContainer.TextBox.Text = FormatValue(aA)
@@ -7105,8 +7483,10 @@ function ah.New(aj,ak)
             end
         end
     end
+
     function al.SetMax(az, aA)
         al.Value.Max = aA
+
         local aB = tonumber(al.Value.Default) or aq
         if aB > aA then
             al:Set(aA)
@@ -7115,8 +7495,10 @@ function ah.New(aj,ak)
             ag(al.UIElements.SliderIcon.Frame, 0.1, { Size = UDim2.new(d, 0, 1, 0) }):Play()
         end
     end
+
     function al.SetMin(az, aA)
         al.Value.Min = aA
+
         local aB = tonumber(al.Value.Default) or aq
         if aB < aA then
             al:Set(aA)
@@ -7125,6 +7507,7 @@ function ah.New(aj,ak)
             ag(al.UIElements.SliderIcon.Frame, 0.1, { Size = UDim2.new(d, 0, 1, 0) }):Play()
         end
     end
+
     ae.AddSignal(al.UIElements.SliderContainer.TextBox.FocusLost, function(az)
         if az then
             local aA = tonumber(al.UIElements.SliderContainer.TextBox.Text)
@@ -7136,6 +7519,8 @@ function ah.New(aj,ak)
             end
         end
     end)
+
+    -- Cleanup function for when slider is destroyed
     local originalDestroy = al.Destroy
     function al.Destroy(...)
         if dragCleanup then
@@ -7145,8 +7530,10 @@ function ah.New(aj,ak)
             return originalDestroy(...)
         end
     end
+
     return al.__type, al
 end
+
 return ah end function a.I()
 local aa=(cloneref or clonereference or function(aa)return aa end)
 
