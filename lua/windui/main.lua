@@ -7163,8 +7163,6 @@ function ah.New(aj,ak)
     return al.__type, al
 end
 
-return ah
-
 return ah end function a.I()
 local aa=(cloneref or clonereference or function(aa)return aa end)
 
