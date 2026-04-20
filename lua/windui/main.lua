@@ -972,23 +972,35 @@ function p.SetDraggable(v)
 p.CanDraggable=v
 end
 
-function p.Drag(v, x, z)
+function p.Drag(v, x, z, scaleObject)
     local G = {
         CanDraggable = true,
-        cleanup = nil
+        cleanup = nil,
+        ScaleObject = scaleObject
     }
+    
     if not x or typeof(x) ~= "table" then
         x = {v}
     end
+    
+    local function GetScale()
+        if G.ScaleObject and G.ScaleObject.Scale then
+            return G.ScaleObject.Scale
+        end
+        return 1
+    end
+    
     local function IsMouseOverFrame(Frame, Position)
         if not Frame or not Position then return false end
         local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize
         return Position.X >= AbsPos.X and Position.X <= AbsPos.X + AbsSize.X 
            and Position.Y >= AbsPos.Y and Position.Y <= AbsPos.Y + AbsSize.Y
     end
+    
     local function GetDistance(pos1, pos2)
         return math.sqrt((pos2.X - pos1.X)^2 + (pos2.Y - pos1.Y)^2)
     end
+    
     local dragging = false
     local dragStart = nil
     local startPos = nil
@@ -998,14 +1010,19 @@ function p.Drag(v, x, z)
     local isDraggingStarted = false
     local currentTouch = nil
     local activeDragFrame = nil
+    local currentScale = 1
+    
     local mouseButton1Connection = nil
     local touchEndedConnection = nil
     local movementConnection = nil
-    local inputEndedConnections = {}
+    
     local function updatePosition(input)
         if not dragging or not dragStart or not G.CanDraggable then return end
-        local delta = input.Position - dragStart
+        
+        currentScale = GetScale()
+        local delta = (input.Position - dragStart) / currentScale
         dragDistance = GetDistance(dragStart, input.Position)
+        
         p.Tween(v, 0.02, {
             Position = UDim2.new(
                 startPos.X.Scale,
@@ -1014,10 +1031,12 @@ function p.Drag(v, x, z)
                 startPos.Y.Offset + delta.Y
             )
         }):Play()
+        
         if z and type(z) == "function" then
             z(true, activeDragFrame, dragDistance)
         end
     end
+    
     local function resetDragState()
         dragging = false
         dragStart = nil
@@ -1026,6 +1045,8 @@ function p.Drag(v, x, z)
         isDraggingStarted = false
         currentTouch = nil
         activeDragFrame = nil
+        currentScale = 1
+        
         if mouseButton1Connection then
             mouseButton1Connection:Disconnect()
             mouseButton1Connection = nil
@@ -1039,15 +1060,19 @@ function p.Drag(v, x, z)
             movementConnection = nil
         end
     end
+    
     local function onInputEnded()
         if dragging then
             local wasDragged = dragDistance > DRAG_THRESHOLD
+            
             if z and type(z) == "function" then
                 z(false, activeDragFrame, wasDragged)
             end
+            
             resetDragState()
         end
     end
+    
     local function onInputEndedHandler(endInput)
         if not dragging then return end
         if endInput.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -1056,11 +1081,13 @@ function p.Drag(v, x, z)
             onInputEnded()
         end
     end
+    
     local function onMovement(input)
         if not dragging or not G.CanDraggable then return end
         if input.UserInputType == Enum.UserInputType.MouseMovement or input == currentTouch then
             if not isDraggingStarted and dragDistance > DRAG_THRESHOLD then
                 isDraggingStarted = true
+                v.ZIndex = 999
                 if z and type(z) == "function" then
                     z("start", activeDragFrame)
                 end
@@ -1068,11 +1095,14 @@ function p.Drag(v, x, z)
             updatePosition(input)
         end
     end
+    
     local function onInputBegan(input, dragFrame)
         if not G.CanDraggable or dragging then return end
+        
         local isValidInput = input.UserInputType == Enum.UserInputType.MouseButton1 
                           or input.UserInputType == Enum.UserInputType.Touch
         if not isValidInput or input.UserInputState ~= Enum.UserInputState.Begin then return end
+        
         if IsMouseOverFrame(dragFrame, input.Position) then
             dragging = true
             dragStart = input.Position
@@ -1080,43 +1110,42 @@ function p.Drag(v, x, z)
             dragDistance = 0
             isDraggingStarted = false
             activeDragFrame = dragFrame
+            
             if input.UserInputType == Enum.UserInputType.Touch then
                 currentTouch = input
             else
                 currentTouch = nil
             end
-            mouseButton1Connection = e.InputEnded:Connect(function(endInput)
-                if endInput.UserInputType == Enum.UserInputType.MouseButton1 then
-                    onInputEndedHandler(endInput)
-                end
-            end)
-            touchEndedConnection = e.InputEnded:Connect(function(endInput)
-                if endInput.UserInputType == Enum.UserInputType.Touch then
-                    onInputEndedHandler(endInput)
-                end
-            end)
-            movementConnection = e.InputChanged:Connect(function(moveInput)
-                if moveInput.UserInputType == Enum.UserInputType.MouseMovement 
-                   or moveInput.UserInputType == Enum.UserInputType.Touch then
-                    onMovement(moveInput)
-                end
-            end)
+            
+            mouseButton1Connection = e.InputEnded:Connect(onInputEndedHandler)
+            touchEndedConnection = e.InputEnded:Connect(onInputEndedHandler)
+            movementConnection = e.InputChanged:Connect(onMovement)
         end
     end
+    
     for _, dragFrame in pairs(x) do
         dragFrame.InputBegan:Connect(function(input)
             onInputBegan(input, dragFrame)
         end)
     end
+    
     function G.Set(_, canDrag)
         G.CanDraggable = canDrag
         if not canDrag and dragging then
+            v.ZIndex = originalZIndex
             resetDragState()
         end
     end
+    
+    function G.SetScaleObject(_, scaleObj)
+        G.ScaleObject = scaleObj
+    end
+    
     function G.Cleanup()
+        v.ZIndex = originalZIndex
         resetDragState()
     end
+    
     return G
 end
 
@@ -6515,64 +6544,115 @@ end)
 end
 
 
+-- Add threshold constant at the top of the toggle component
+local DRAG_THRESHOLD = 5
+
+-- Updated Animate function for Toggle
 function am.Animate(av, aw, ax)
     if not al.Window.IsToggleDragging then
         al.Window.IsToggleDragging = true
-        local DRAG_THRESHOLD = 5
-        local dragStarted = false
-        local dragStartX = aw.Position.X
-        local dragStartY = aw.Position.Y
-        local initialPosition = aq.Frame.Position.X.Offset
+        
+        local startX = aw.Position.X
+        local startY = aw.Position.Y
+        local startOffset = aq.Frame.Position.X.Offset
         local dragDistance = 0
-        local isDraggingStarted = false
-        local function GetDistance(pos1X, pos1Y, pos2X, pos2Y)
-            return math.sqrt((pos2X - pos1X)^2 + (pos2Y - pos1Y)^2)
-        end
-        local initialToggleState = ax.Value
+        local hasMovedBeyondThreshold = false
+        local originalValue = ax.Value
+        
+        -- Store initial state for click detection
+        local initialDragStart = {X = startX, Y = startY}
+        
+        -- Animate visual feedback
         ad(aq.Frame.Bar.UIScale, 0.28, {Scale = 1.5}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
         ad(aq.Frame.Bar.Highlight.BarOverlay, 0.28, {ImageTransparency = 0.86}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
+        
         if ar then ar:Disconnect() end
+        
+        -- Helper function to calculate distance
+        local function getDistance(pos1X, pos1Y, pos2X, pos2Y)
+            return math.sqrt((pos2X - pos1X)^2 + (pos2Y - pos1Y)^2)
+        end
+        
         ar = ae.InputChanged:Connect(function(d)
             if not al.Window.IsToggleDragging then return end
             if d.UserInputType ~= Enum.UserInputType.MouseMovement and d.UserInputType ~= Enum.UserInputType.Touch then return end
-            dragDistance = GetDistance(dragStartX, dragStartY, d.Position.X, d.Position.Y)
-            if not isDraggingStarted and dragDistance > DRAG_THRESHOLD then
-                isDraggingStarted = true
-                dragStarted = true
+            
+            -- Calculate drag distance from start
+            dragDistance = getDistance(startX, startY, d.Position.X, d.Position.Y)
+            
+            -- Check if we've passed the threshold
+            if not hasMovedBeyondThreshold and dragDistance > DRAG_THRESHOLD then
+                hasMovedBeyondThreshold = true
             end
-            local deltaX = d.Position.X - dragStartX
-            local newPosition = math.max(2, math.min(initialPosition + deltaX, au - at - 2))
-            local progress = math.clamp((newPosition - 2) / (au - at - 4), 0, 1)
-            local glassId, glassSize, glassOffset = am:GetGlassFrame(progress)
-            aq.Frame.Bar.Highlight.Glass.Image = glassId
+            
+            local deltaX = d.Position.X - startX
+            local newOffset = math.max(2, math.min(startOffset + deltaX, au - at - 2))
+            
+            local progress = math.clamp((newOffset - 2) / (au - at - 4), 0, 1)
+            
+            local glassImg, glassSize, glassOffset = am:GetGlassFrame(progress)
+            aq.Frame.Bar.Highlight.Glass.Image = glassImg
             aq.Frame.Bar.Highlight.Glass.ImageRectSize = glassSize
             aq.Frame.Bar.Highlight.Glass.ImageRectOffset = glassOffset
+            
             ad(aq.Frame, 0.12, {
-                Position = UDim2.new(0, newPosition, 0.5, 0)
+                Position = UDim2.new(0, newOffset, 0.5, 0)
             }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
         end)
+        
         if as then as:Disconnect() end
+        
         as = ae.InputEnded:Connect(function(d)
             if not al.Window.IsToggleDragging then return end
             if d.UserInputType ~= Enum.UserInputType.MouseButton1 and d.UserInputType ~= Enum.UserInputType.Touch then return end
+            
             al.Window.IsToggleDragging = false
+            
             if ar then ar:Disconnect(); ar = nil end
             if as then as:Disconnect(); as = nil end
-            local finalState
-            if not isDraggingStarted then
-                finalState = not ax.Value
-                ax:Set(finalState, true, false)
+            
+            -- Determine if this was a click or a drag
+            local wasClick = not hasMovedBeyondThreshold and dragDistance <= DRAG_THRESHOLD
+            
+            if wasClick then
+                -- Toggle the value (click behavior)
+                ax:Set(not ax.Value, true, false)
             else
-                local currentPos = aq.Frame.Position.X.Offset
-                local centerPosition = currentPos + at / 2
-                finalState = centerPosition > au / 2
-                ax:Set(finalState, true, false)
+                -- Determine final position based on drag
+                local currentOffset = aq.Frame.Position.X.Offset
+                local thumbCenter = currentOffset + at / 2
+                local shouldBeOn = thumbCenter > au / 2
+                ax:Set(shouldBeOn, true, false)
             end
+            
+            -- Reset visual effects
             ad(aq.Frame.Bar.UIScale, 0.23, {Scale = 1}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
             ad(aq.Frame.Bar.Highlight.BarOverlay, 0.23, {ImageTransparency = 0}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
         end)
     end
 end
+
+-- Updated InputBegan connection for Toggle (around line ~9430)
+if ah.Window.NewElements and am.Animate then
+    if ai.Type == "Toggle" then
+        local touchStartTime = 0
+        local touchStartPos = nil
+        
+        aa.AddSignal(al.ToggleFrame.Hitbox.InputBegan, function(an)
+            if not ah.Window.IsToggleDragging then
+                local isValid = an.UserInputType == Enum.UserInputType.MouseButton1 
+                             or an.UserInputType == Enum.UserInputType.Touch
+                
+                if isValid then
+                    touchStartTime = tick()
+                    touchStartPos = {X = an.Position.X, Y = an.Position.Y}
+                    am:Animate(an, ai)
+                end
+            end
+        end)
+    end
+end
+
 return ap,am
 end
 
@@ -7020,86 +7100,126 @@ end
 
 local ay=ak.Tab.UIElements.ContainerFrame
 
+local DRAG_THRESHOLD = 5  -- Add at top of slider component
+
+-- Updated Set function for Slider
 function al.Set(az, aA, aB)
     if as then
         if not al.IsFocusing and not ai and (not aB or (aB.UserInputType == Enum.UserInputType.MouseButton1 or aB.UserInputType == Enum.UserInputType.Touch)) then
             if aB then
-                local DRAG_THRESHOLD = 5
-                local dragStarted = false
-                local dragStartX = aB.Position.X
-                local dragStartY = aB.Position.Y
+                local startX = aB.UserInputType == Enum.UserInputType.Touch and aB.Position.X or ac:GetMouseLocation().X
+                local startY = aB.UserInputType == Enum.UserInputType.Touch and aB.Position.Y or ac:GetMouseLocation().Y
                 local dragDistance = 0
-                local initialProgress = ar
-                local isDraggingStarted = false
-                local finalProgress = ar
+                local hasMovedBeyondThreshold = false
+                local startProgress = aq
+                
                 am = (aB.UserInputType == Enum.UserInputType.Touch)
                 ay.ScrollingEnabled = false
                 ai = true
-                local initialValue = aq
-                local function updateSliderFromInput(inputPos)
-                    local posX = am and inputPos.Position.X or ae:GetMouseLocation().X
-                    local progress = math.clamp((posX - al.UIElements.SliderIcon.AbsolutePosition.X) / al.UIElements.SliderIcon.AbsoluteSize.X, 0, 1)
-                    local newValue = CalculateValue(al.Value.Min + progress * (al.Value.Max - al.Value.Min))
+                
+                -- Store click start for detection
+                local clickStartPos = {X = startX, Y = startY}
+                local clickStartTime = tick()
+                
+                -- Helper for distance calculation
+                local function getDistance(x1, y1, x2, y2)
+                    return math.sqrt((x2 - x1)^2 + (y2 - y1)^2)
+                end
+                
+                -- Initial position update
+                local function updateSliderFromPosition(posX, posY)
+                    local relativeX = (posX - al.UIElements.SliderIcon.AbsolutePosition.X) / al.UIElements.SliderIcon.AbsoluteSize.X
+                    local newProgress = math.clamp(relativeX, 0, 1)
+                    local newValue = CalculateValue(al.Value.Min + newProgress * (al.Value.Max - al.Value.Min))
                     newValue = math.clamp(newValue, al.Value.Min or 0, al.Value.Max or 100)
-                    finalProgress = progress
+                    
                     if newValue ~= aq then
-                        ag(al.UIElements.SliderIcon.Frame, 0.05, {Size = UDim2.new(progress, 0, 1, 0)}):Play()
+                        ag(al.UIElements.SliderIcon.Frame, 0.05, {Size = UDim2.new(newProgress, 0, 1, 0)}):Play()
                         al.UIElements.SliderContainer.TextBox.Text = FormatValue(newValue)
                         if ax then ax.TitleFrame.Text = FormatValue(newValue) end
                         al.Value.Default = FormatValue(newValue)
                         aq = newValue
                         ae.SafeCallback(al.Callback, FormatValue(newValue))
                     end
+                    
+                    return newProgress, newValue
                 end
-                updateSliderFromInput(aB)
+                
+                -- Initial update
+                updateSliderFromPosition(startX, startY)
+                
                 an = ad.RenderStepped:Connect(function()
-                    if not ai then return end
-                    local currentMouse = ae:GetMouseLocation()
-                    local dragCurrentX = currentMouse.X
-                    local dragCurrentY = currentMouse.Y
-                    dragDistance = math.sqrt((dragCurrentX - dragStartX)^2 + (dragCurrentY - dragStartY)^2)
-                    if not isDraggingStarted and dragDistance > DRAG_THRESHOLD then
-                        isDraggingStarted = true
-                        dragStarted = true
+                    local currentX = am and aB.Position.X or ac:GetMouseLocation().X
+                    local currentY = am and aB.Position.Y or ac:GetMouseLocation().Y
+                    
+                    -- Track drag distance
+                    dragDistance = getDistance(clickStartPos.X, clickStartPos.Y, currentX, currentY)
+                    
+                    if not hasMovedBeyondThreshold and dragDistance > DRAG_THRESHOLD then
+                        hasMovedBeyondThreshold = true
                     end
-                    updateSliderFromInput({Position = currentMouse})
+                    
+                    updateSliderFromPosition(currentX, currentY)
                 end)
-                ao = ae.InputEnded:Connect(function(f)
+                
+                ao = ac.InputEnded:Connect(function(f)
                     if (f.UserInputType == Enum.UserInputType.MouseButton1 or f.UserInputType == Enum.UserInputType.Touch) and aB == f then
                         an:Disconnect()
                         ao:Disconnect()
                         ai = false
                         ay.ScrollingEnabled = true
-                        if not isDraggingStarted then
-                            ae.SafeCallback(al.Callback, FormatValue(aq))
-                        else
-                            ae.SafeCallback(al.Callback, FormatValue(aq))
+                        
+                        -- Check if this was a click (not a drag)
+                        local wasClick = not hasMovedBeyondThreshold and dragDistance <= DRAG_THRESHOLD
+                        local clickDuration = tick() - clickStartTime
+                        
+                        -- For clicks, snap to nearest position based on click location
+                        if wasClick and clickDuration < 0.3 then
+                            -- Re-evaluate position on click (ensures accurate placement)
+                            local finalX = f.Position.X
+                            local relativeX = (finalX - al.UIElements.SliderIcon.AbsolutePosition.X) / al.UIElements.SliderIcon.AbsoluteSize.X
+                            local newProgress = math.clamp(relativeX, 0, 1)
+                            local newValue = CalculateValue(al.Value.Min + newProgress * (al.Value.Max - al.Value.Min))
+                            newValue = math.clamp(newValue, al.Value.Min or 0, al.Value.Max or 100)
+                            
+                            if newValue ~= aq then
+                                ag(al.UIElements.SliderIcon.Frame, 0.05, {Size = UDim2.new(newProgress, 0, 1, 0)}):Play()
+                                al.UIElements.SliderContainer.TextBox.Text = FormatValue(newValue)
+                                if ax then ax.TitleFrame.Text = FormatValue(newValue) end
+                                al.Value.Default = FormatValue(newValue)
+                                aq = newValue
+                                ae.SafeCallback(al.Callback, FormatValue(newValue))
+                            end
                         end
-                        if al.Window.NewElements then
+                        
+                        if ak.Window.NewElements then
                             ag(al.UIElements.SliderIcon.Frame.Thumb, 0.2, {
                                 ImageTransparency = 0,
-                                Size = UDim2.new(0, al.Window.NewElements and (al.ThumbSize * 2) or (al.ThumbSize + 2), 0, al.Window.NewElements and (al.ThumbSize + 4) or (al.ThumbSize + 2))
+                                Size = UDim2.new(0, ak.Window.NewElements and (al.ThumbSize * 2) or (al.ThumbSize + 2), 0, ak.Window.NewElements and (al.ThumbSize + 4) or (al.ThumbSize + 2))
                             }, Enum.EasingStyle.Quint, Enum.EasingDirection.InOut):Play()
                         end
                         if ax then ax:Close(false) end
                     end
                 end)
             else
-                local aC = math.clamp(aA, al.Value.Min or 0, al.Value.Max or 100)
-                local progress = math.clamp((aC - (al.Value.Min or 0)) / ((al.Value.Max or 100) - (al.Value.Min or 0)), 0, 1)
-                aC = CalculateValue(al.Value.Min + progress * (al.Value.Max - al.Value.Min))
-                if aC ~= aq then
+                -- Non-drag update (programmatic)
+                local newValue = math.clamp(aA, al.Value.Min or 0, al.Value.Max or 100)
+                local progress = math.clamp((newValue - (al.Value.Min or 0)) / ((al.Value.Max or 100) - (al.Value.Min or 0)), 0, 1)
+                newValue = CalculateValue(al.Value.Min + progress * (al.Value.Max - al.Value.Min))
+                
+                if newValue ~= aq then
                     ag(al.UIElements.SliderIcon.Frame, 0.05, {Size = UDim2.new(progress, 0, 1, 0)}):Play()
-                    al.UIElements.SliderContainer.TextBox.Text = FormatValue(aC)
-                    if ax then ax.TitleFrame.Text = FormatValue(aC) end
-                    al.Value.Default = FormatValue(aC)
-                    aq = aC
-                    ae.SafeCallback(al.Callback, FormatValue(aC))
+                    al.UIElements.SliderContainer.TextBox.Text = FormatValue(newValue)
+                    if ax then ax.TitleFrame.Text = FormatValue(newValue) end
+                    al.Value.Default = FormatValue(newValue)
+                    aq = newValue
+                    ae.SafeCallback(al.Callback, FormatValue(newValue))
                 end
             end
         end
     end
 end
+
 function al.SetMax(az,aA)
 al.Value.Max=aA
 
