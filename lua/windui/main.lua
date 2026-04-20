@@ -6950,8 +6950,7 @@ end
 return ai.__type,ai
 end
 
-return af
-end end function a.H()
+return af end function a.H()
 local aa=(cloneref or clonereference or function(aa)return aa end)
 
 local ac=aa(game:GetService"UserInputService")
