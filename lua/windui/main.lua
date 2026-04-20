@@ -978,6 +978,9 @@ function p.Drag(v, x, z)
         cleanup = nil
     }
     
+    -- Get UserInputService locally
+    local userInputService = game:GetService("UserInputService")
+    
     if not x or typeof(x) ~= "table" then
         x = {v}
     end
@@ -1010,7 +1013,7 @@ function p.Drag(v, x, z)
     local isDraggingStarted = false
     local currentTouch = nil
     local activeDragFrame = nil
-    local disabledScrollingFrames = {} -- Store disabled scrolling frames
+    local disabledScrollingFrames = {}
     
     local mouseButton1Connection = nil
     local touchEndedConnection = nil
@@ -1140,20 +1143,20 @@ function p.Drag(v, x, z)
                 currentTouch = nil
             end
             
-            -- Set up connections
-            mouseButton1Connection = e.InputEnded:Connect(function(endInput)
+            -- Set up connections using userInputService
+            mouseButton1Connection = userInputService.InputEnded:Connect(function(endInput)
                 if endInput.UserInputType == Enum.UserInputType.MouseButton1 then
                     onInputEndedHandler(endInput)
                 end
             end)
             
-            touchEndedConnection = e.InputEnded:Connect(function(endInput)
+            touchEndedConnection = userInputService.InputEnded:Connect(function(endInput)
                 if endInput.UserInputType == Enum.UserInputType.Touch then
                     onInputEndedHandler(endInput)
                 end
             end)
             
-            movementConnection = e.InputChanged:Connect(function(moveInput)
+            movementConnection = userInputService.InputChanged:Connect(function(moveInput)
                 if moveInput.UserInputType == Enum.UserInputType.MouseMovement 
                    or moveInput.UserInputType == Enum.UserInputType.Touch then
                     onMovement(moveInput)
@@ -1162,26 +1165,29 @@ function p.Drag(v, x, z)
             
             -- Prevent the input from being processed by the scrolling frame
             if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                input:SetAttribute("Handled", true)
+                -- Some executors support this, some don't - wrap in pcall
+                pcall(function()
+                    input:SetAttribute("Handled", true)
+                end)
             end
         end
     end
     
-    -- Connect all drag frames with InputBegan and also handle MouseButton1Down for better compatibility
+    -- Connect all drag frames with InputBegan
     for _, dragFrame in pairs(x) do
-        -- Use InputBegan for touch and mouse
         dragFrame.InputBegan:Connect(function(input)
             onInputBegan(input, dragFrame)
         end)
         
-        -- Also handle MouseButton1Down for cases where InputBegan might be intercepted
+        -- Also handle MouseButton1Down for better compatibility
         if dragFrame:IsA("TextButton") or dragFrame:IsA("ImageButton") or dragFrame:IsA("Frame") then
             dragFrame.MouseButton1Down:Connect(function()
                 if not dragging and G.CanDraggable then
+                    local mouseLocation = userInputService:GetMouseLocation()
                     local input = {
                         UserInputType = Enum.UserInputType.MouseButton1,
                         UserInputState = Enum.UserInputState.Begin,
-                        Position = e:GetMouseLocation()
+                        Position = mouseLocation
                     }
                     onInputBegan(input, dragFrame)
                 end
