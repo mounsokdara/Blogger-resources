@@ -990,20 +990,16 @@ function p.Drag(v, x, z)
            and Position.Y >= AbsPos.Y and Position.Y <= AbsPos.Y + AbsSize.Y
     end
     
-    -- Helper function to calculate distance
-    local function GetDistance(pos1, pos2)
-        return math.sqrt((pos2.X - pos1.X)^2 + (pos2.Y - pos1.Y)^2)
-    end
-    
-    -- Disable scrolling on parent scrolling frames while dragging
-    local function SetScrollingEnabled(frame, enabled)
-        local current = frame
+    -- Find parent ScrollingFrame and disable/enable it
+    local function GetParentScrollingFrame(frame)
+        local current = frame.Parent
         while current do
             if current:IsA("ScrollingFrame") then
-                current.ScrollingEnabled = enabled
+                return current
             end
             current = current.Parent
         end
+        return nil
     end
     
     local dragging = false
@@ -1011,33 +1007,36 @@ function p.Drag(v, x, z)
     local startPos = nil
     local dragDistance = 0
     local DRAG_THRESHOLD = 5
-    local originalZIndex = v.ZIndex
     local isDraggingStarted = false
     local currentTouch = nil
     local activeDragFrame = nil
-    local parentScrollingFrames = {}
+    local disabledScrollingFrames = {} -- Store disabled scrolling frames
     
     local mouseButton1Connection = nil
     local touchEndedConnection = nil
     local movementConnection = nil
     
-    -- Find all parent scrolling frames
-    local function FindParentScrollingFrames(frame)
-        local frames = {}
-        local current = frame.Parent
-        while current do
-            if current:IsA("ScrollingFrame") then
-                table.insert(frames, current)
-            end
-            current = current.Parent
+    -- Store original ScrollingEnabled state
+    local function DisableParentScrolling(frame)
+        local scrollFrame = GetParentScrollingFrame(frame)
+        if scrollFrame and not disabledScrollingFrames[scrollFrame] then
+            disabledScrollingFrames[scrollFrame] = scrollFrame.ScrollingEnabled
+            scrollFrame.ScrollingEnabled = false
         end
-        return frames
+    end
+    
+    local function RestoreParentScrolling()
+        for scrollFrame, originalState in pairs(disabledScrollingFrames) do
+            if scrollFrame and scrollFrame.Parent then
+                scrollFrame.ScrollingEnabled = originalState
+            end
+        end
+        disabledScrollingFrames = {}
     end
     
     local function updatePosition(input)
         if not dragging or not dragStart or not G.CanDraggable then return end
         local delta = input.Position - dragStart
-        dragDistance = GetDistance(dragStart, input.Position)
         
         p.Tween(v, 0.02, {
             Position = UDim2.new(
@@ -1060,18 +1059,10 @@ function p.Drag(v, x, z)
         dragDistance = 0
         isDraggingStarted = false
         currentTouch = nil
+        activeDragFrame = nil
         
-        -- Re-enable scrolling on all parent scrolling frames
-        for _, sf in ipairs(parentScrollingFrames) do
-            if sf and sf.Parent then
-                sf.ScrollingEnabled = true
-            end
-        end
-        parentScrollingFrames = {}
-        
-        if activeDragFrame then
-            activeDragFrame = nil
-        end
+        -- Restore all scrolling frames
+        RestoreParentScrolling()
         
         if mouseButton1Connection then
             mouseButton1Connection:Disconnect()
@@ -1111,12 +1102,16 @@ function p.Drag(v, x, z)
     local function onMovement(input)
         if not dragging or not G.CanDraggable then return end
         if input.UserInputType == Enum.UserInputType.MouseMovement or input == currentTouch then
-            if not isDraggingStarted and dragDistance > DRAG_THRESHOLD then
+            local newDragDistance = (input.Position - dragStart).Magnitude
+            
+            if not isDraggingStarted and newDragDistance > DRAG_THRESHOLD then
                 isDraggingStarted = true
                 if z and type(z) == "function" then
                     z("start", activeDragFrame)
                 end
             end
+            
+            dragDistance = newDragDistance
             updatePosition(input)
         end
     end
@@ -1129,18 +1124,15 @@ function p.Drag(v, x, z)
         if not isValidInput or input.UserInputState ~= Enum.UserInputState.Begin then return end
         
         if IsMouseOverFrame(dragFrame, input.Position) then
+            -- Disable scrolling on parent ScrollingFrames before drag starts
+            DisableParentScrolling(dragFrame)
+            
             dragging = true
             dragStart = input.Position
             startPos = v.Position
             dragDistance = 0
             isDraggingStarted = false
             activeDragFrame = dragFrame
-            
-            -- Find and disable scrolling on parent scrolling frames
-            parentScrollingFrames = FindParentScrollingFrames(dragFrame)
-            for _, sf in ipairs(parentScrollingFrames) do
-                sf.ScrollingEnabled = false
-            end
             
             if input.UserInputType == Enum.UserInputType.Touch then
                 currentTouch = input
@@ -1168,26 +1160,23 @@ function p.Drag(v, x, z)
                 end
             end)
             
-            -- Prevent default input propagation
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    -- Handled by onInputEnded
-                end
-            end)
+            -- Prevent the input from being processed by the scrolling frame
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                input:SetAttribute("Handled", true)
+            end
         end
     end
     
-    -- Connect all drag frames with InputBegan (using InputBegan instead of MouseButton1Down for better capture)
+    -- Connect all drag frames with InputBegan and also handle MouseButton1Down for better compatibility
     for _, dragFrame in pairs(x) do
-        -- Use InputBegan to capture before scrolling frames
+        -- Use InputBegan for touch and mouse
         dragFrame.InputBegan:Connect(function(input)
             onInputBegan(input, dragFrame)
         end)
         
-        -- Also connect MouseButton1Down as fallback
-        if dragFrame.MouseButton1Down then
+        -- Also handle MouseButton1Down for cases where InputBegan might be intercepted
+        if dragFrame:IsA("TextButton") or dragFrame:IsA("ImageButton") or dragFrame:IsA("Frame") then
             dragFrame.MouseButton1Down:Connect(function()
-                -- This is a fallback for when InputBegan doesn't fire
                 if not dragging and G.CanDraggable then
                     local input = {
                         UserInputType = Enum.UserInputType.MouseButton1,
