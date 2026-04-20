@@ -6514,75 +6514,242 @@ end
 end)
 end
 
-
 function am.Animate(av,aw,ax)
-if not al.Window.IsToggleDragging then
-al.Window.IsToggleDragging=true
-
-local ay=aw.Position.X
-local az=aw.Position.Y
-local aA=aq.Frame.Position.X.Offset
-local aB=false
-local b=false
-
-ad(aq.Frame.Bar.UIScale,0.28,{Scale=1.5},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-ad(aq.Frame.Bar.Highlight.BarOverlay,0.28,{ImageTransparency=.86},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-
-if ar then ar:Disconnect()end
-
-ar=ae.InputChanged:Connect(function(d)
-if not al.Window.IsToggleDragging then return end
-if d.UserInputType~=Enum.UserInputType.MouseMovement then return end
-if aB then return end
-
-local f=math.abs(d.Position.X-ay)
-math.abs(d.Position.Y-az)
-
-if not b and f>8 then
-b=true
+    if not al.Window.IsToggleDragging then
+        al.Window.IsToggleDragging = true
+        
+        local ay = aw.Position.X
+        local az = aw.Position.Y
+        local aA = aq.Frame.Position.X.Offset
+        local aB = false
+        local b = false
+        
+        ad(aq.Frame.Bar.UIScale,0.28,{Scale=1.5},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+        ad(aq.Frame.Bar.Highlight.BarOverlay,0.28,{ImageTransparency=.86},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+        
+        if ar then ar:Disconnect() end
+        
+        ar = ae.InputChanged:Connect(function(d)
+            if not al.Window.IsToggleDragging then return end
+            if d.UserInputType ~= Enum.UserInputType.MouseMovement and d.UserInputType ~= Enum.UserInputType.Touch then return end
+            if aB then return end
+            
+            local f = DraggingSystem.GetDistance(d.Position, Vector2.new(ay, az))
+            local horizontalDelta = math.abs(d.Position.X - ay)
+            
+            if not b and horizontalDelta > 8 then
+                b = true
+            end
+            
+            local g = d.Position.X - ay
+            local h = math.max(2, math.min(aA + g, au - at - 2))
+            
+            local j = math.clamp((h - 2) / (au - at - 4), 0, 1)
+            
+            local l,m,p = am:GetGlassFrame(j)
+            aq.Frame.Bar.Highlight.Glass.Image = l
+            aq.Frame.Bar.Highlight.Glass.ImageRectSize = m
+            aq.Frame.Bar.Highlight.Glass.ImageRectOffset = p
+            
+            ad(aq.Frame,0.12,{
+                Position = UDim2.new(0, h, 0.5, 0)
+            }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
+        end)
+        
+        if as then as:Disconnect() end
+        
+        as = ae.InputEnded:Connect(function(d)
+            if not al.Window.IsToggleDragging then return end
+            if d.UserInputType ~= Enum.UserInputType.MouseButton1 and d.UserInputType ~= Enum.UserInputType.Touch then return end
+            
+            al.Window.IsToggleDragging = false
+            
+            if ar then ar:Disconnect() ar = nil end
+            if as then as:Disconnect() as = nil end
+            
+            if aB then return end
+            
+            if not b then
+                ax:Set(not ax.Value, true, false)
+            else
+                local f = aq.Frame.Position.X.Offset
+                local g = f + at / 2
+                local h = g > au / 2
+                ax:Set(h, true, false)
+            end
+            
+            ad(aq.Frame.Bar.UIScale,0.23,{Scale=1},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+            ad(aq.Frame.Bar.Highlight.BarOverlay,0.23,{ImageTransparency=0},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+        end)
+    end
 end
 
-local g=d.Position.X-ay
-local h=math.max(2,math.min(aA+g,au-at-2))
+DraggingSystem = {}
 
-local j=math.clamp((h-2)/(au-at-4),0,1)
-
-local l,m,p=am:GetGlassFrame(j)
-aq.Frame.Bar.Highlight.Glass.Image=l
-aq.Frame.Bar.Highlight.Glass.ImageRectSize=m
-aq.Frame.Bar.Highlight.Glass.ImageRectOffset=p
-
-ad(aq.Frame,0.12,{
-Position=UDim2.new(0,h,0.5,0)
-},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-end)
-
-if as then as:Disconnect()end
-
-as=ae.InputEnded:Connect(function(d)
-if not al.Window.IsToggleDragging then return end
-if d.UserInputType~=Enum.UserInputType.MouseButton1 then return end
-
-al.Window.IsToggleDragging=false
-
-if ar then ar:Disconnect()ar=nil end
-if as then as:Disconnect()as=nil end
-
-if aB then return end
-
-if not b then
-ax:Set(not ax.Value,true,false)
-else
-local f=aq.Frame.Position.X.Offset
-local g=f+at/2
-local h=g>au/2
-ax:Set(h,true,false)
+function DraggingSystem.GetDistance(pos1, pos2)
+    return math.sqrt((pos2.X - pos1.X)^2 + (pos2.Y - pos1.Y)^2)
 end
 
-ad(aq.Frame.Bar.UIScale,0.23,{Scale=1},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-ad(aq.Frame.Bar.Highlight.BarOverlay,0.23,{ImageTransparency=0},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-end)
+function DraggingSystem.IsMouseOverFrame(Frame, Position)
+    local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize
+    return Position.X >= AbsPos.X and Position.X <= AbsPos.X + AbsSize.X and Position.Y >= AbsPos.Y and Position.Y <= AbsPos.Y + AbsSize.Y
 end
+
+function DraggingSystem.MakeDraggable(MainFrame, DragFrame, CallbackTable)
+    if not MainFrame or not DragFrame then return end
+    
+    local dragging = false
+    local dragStart = nil
+    local startPos = nil
+    local dragDistance = 0
+    local DRAG_THRESHOLD = 5
+    local originalZIndex = MainFrame.ZIndex
+    local isDraggingStarted = false
+    local currentTouch = nil
+    
+    local function getScreenSize()
+        return workspace.CurrentCamera.ViewportSize
+    end
+    
+    local function updatePosition(input)
+        if not dragging or not dragStart then return end
+        local delta = input.Position - dragStart
+        dragDistance = math.sqrt(delta.X^2 + delta.Y^2)
+        
+        local screenSize = getScreenSize()
+        local newOffsetX = startPos.X.Offset + delta.X
+        local newOffsetY = startPos.Y.Offset + delta.Y
+        
+        local newScaleX = startPos.X.Scale
+        local newScaleY = startPos.Y.Scale
+        
+        if startPos.X.Scale > 0 then
+            local scaleOffsetX = (screenSize.X * startPos.X.Scale) + startPos.X.Offset
+            local newAbsoluteX = scaleOffsetX + delta.X
+            newScaleX = newAbsoluteX / screenSize.X
+            newOffsetX = 0
+        end
+        
+        if startPos.Y.Scale > 0 then
+            local scaleOffsetY = (screenSize.Y * startPos.Y.Scale) + startPos.Y.Offset
+            local newAbsoluteY = scaleOffsetY + delta.Y
+            newScaleY = newAbsoluteY / screenSize.Y
+            newOffsetY = 0
+        end
+        
+        MainFrame.Position = UDim2.new(newScaleX, newOffsetX, newScaleY, newOffsetY)
+        
+        if CallbackTable and CallbackTable.OnDragUpdate then
+            CallbackTable.OnDragUpdate(MainFrame.Position, dragDistance)
+        end
+    end
+    
+    local function resetDragState()
+        dragging = false
+        dragStart = nil
+        startPos = nil
+        dragDistance = 0
+        isDraggingStarted = false
+        currentTouch = nil
+    end
+    
+    local mouseButton1Connection = nil
+    local touchEndedConnection = nil
+    local movementConnection = nil
+    
+    local function onInputEnded()
+        if dragging then
+            local wasDragged = dragDistance > DRAG_THRESHOLD
+            if not wasDragged and CallbackTable and CallbackTable.OnClick then
+                CallbackTable.OnClick()
+            end
+            if wasDragged and isDraggingStarted then
+                MainFrame.ZIndex = originalZIndex
+                if CallbackTable and CallbackTable.OnDragEnd then
+                    CallbackTable.OnDragEnd(MainFrame.Position, wasDragged)
+                end
+            end
+            resetDragState()
+            if mouseButton1Connection then
+                mouseButton1Connection:Disconnect()
+                mouseButton1Connection = nil
+            end
+            if touchEndedConnection then
+                touchEndedConnection:Disconnect()
+                touchEndedConnection = nil
+            end
+            if movementConnection then
+                movementConnection:Disconnect()
+                movementConnection = nil
+            end
+        end
+    end
+    
+    local function onInputEndedHandler(endInput)
+        if dragging then
+            if endInput.UserInputType == Enum.UserInputType.MouseButton1 then
+                onInputEnded()
+            elseif endInput.UserInputType == Enum.UserInputType.Touch and endInput == currentTouch then
+                onInputEnded()
+            end
+        end
+    end
+    
+    local function onMovement(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input == currentTouch) then
+            if not isDraggingStarted and dragDistance > DRAG_THRESHOLD then
+                isDraggingStarted = true
+                if CallbackTable and CallbackTable.OnDragStart then
+                    CallbackTable.OnDragStart()
+                end
+            end
+            updatePosition(input)
+        end
+    end
+    
+    local function onInputBegan(input)
+        if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and input.UserInputState == Enum.UserInputState.Begin and not dragging then
+            if DraggingSystem.IsMouseOverFrame(DragFrame, input.Position) then
+                dragging = true
+                dragStart = input.Position
+                startPos = MainFrame.Position
+                dragDistance = 0
+                isDraggingStarted = false
+                if input.UserInputType == Enum.UserInputType.Touch then
+                    currentTouch = input
+                else
+                    currentTouch = nil
+                end
+                
+                mouseButton1Connection = UserInputService.InputEnded:Connect(function(endInput)
+                    if endInput.UserInputType == Enum.UserInputType.MouseButton1 then
+                        onInputEndedHandler(endInput)
+                    end
+                end)
+                touchEndedConnection = UserInputService.InputEnded:Connect(function(endInput)
+                    if endInput.UserInputType == Enum.UserInputType.Touch then
+                        onInputEndedHandler(endInput)
+                    end
+                end)
+                movementConnection = UserInputService.InputChanged:Connect(function(moveInput)
+                    if moveInput.UserInputType == Enum.UserInputType.MouseMovement or moveInput.UserInputType == Enum.UserInputType.Touch then
+                        onMovement(moveInput)
+                    end
+                end)
+            end
+        end
+    end
+    
+    local inputBeganConnection = DragFrame.InputBegan:Connect(onInputBegan)
+    
+    local cleanupFunction = function()
+        inputBeganConnection:Disconnect()
+        if mouseButton1Connection then mouseButton1Connection:Disconnect() end
+        if touchEndedConnection then touchEndedConnection:Disconnect() end
+        if movementConnection then movementConnection:Disconnect() end
+    end
+    
+    return cleanupFunction
 end
 
 return ap,am
@@ -6641,16 +6808,7 @@ ThemeTag={
 ImageColor3="CheckboxBorder",
 ImageTransparency="CheckboxBorderTransparency",
 },
-},{
-
-
-
-
-
-
-
 }),
-
 am,
 },true)
 
@@ -6660,8 +6818,6 @@ ad(an.Layer,0.06,{
 ImageTransparency=0,
 }):Play()
 
-
-
 ad(am.ImageLabel,0.06,{
 ImageTransparency=0,
 }):Play()
@@ -6669,8 +6825,6 @@ else
 ad(an.Layer,0.05,{
 ImageTransparency=1,
 }):Play()
-
-
 
 ad(am.ImageLabel,0.06,{
 ImageTransparency=1,
@@ -6715,10 +6869,6 @@ UIElements={}
 ai.ToggleFrame=a.load'B'{
 Title=ai.Title,
 Desc=ai.Desc,
-
-
-
-
 Window=ah.Window,
 Parent=ah.Parent,
 TextOffset=(52),
@@ -6780,16 +6930,11 @@ ai:Set(ak,false,ah.Window.NewElements)
 if ah.Window.NewElements and am.Animate then
 if ai.Type=="Toggle"then
 aa.AddSignal(al.ToggleFrame.Hitbox.InputBegan,function(an)
-if not ah.Window.IsToggleDragging and an.UserInputType==Enum.UserInputType.MouseButton1  then
+if not ah.Window.IsToggleDragging and an.UserInputType==Enum.UserInputType.MouseButton1 or an.UserInputType==Enum.UserInputType.Touch then
 am:Animate(an,ai)
 end
 end)
 end
-
-
-
-
-
 else
 if ai.Type=="Toggle"then
 aa.AddSignal(al.ToggleFrame.Hitbox.MouseButton1Click,function()
@@ -6805,7 +6950,8 @@ end
 return ai.__type,ai
 end
 
-return af end function a.H()
+return af
+end end function a.H()
 local aa=(cloneref or clonereference or function(aa)return aa end)
 
 local ac=aa(game:GetService"UserInputService")
@@ -6815,19 +6961,19 @@ local ae=a.load'c'
 local af=ae.New
 local ag=ae.Tween
 
-local DraggingXPos = {}
+local DraggingXPosSlider = {}
 
-function DraggingXPos.GetDistance(pos1, pos2)
+function DraggingXPosSlider.GetDistance(pos1, pos2)
     return math.abs(pos2.X - pos1.X)
 end
 
-function DraggingXPos.IsMouseOverFrame(Frame, Position)
+function DraggingXPosSlider.IsMouseOverFrame(Frame, Position)
     local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize
     return Position.X >= AbsPos.X and Position.X <= AbsPos.X + AbsSize.X 
         and Position.Y >= AbsPos.Y and Position.Y <= AbsPos.Y + AbsSize.Y
 end
 
-function DraggingXPos.MakeDraggable(MainFrame, DragFrame, CallbackTable)
+function DraggingXPosSlider.MakeDraggable(MainFrame, DragFrame, CallbackTable)
     if not MainFrame or not DragFrame then return end
     
     local dragging = false
@@ -6942,7 +7088,7 @@ function DraggingXPos.MakeDraggable(MainFrame, DragFrame, CallbackTable)
     local function onInputBegan(input)
         if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) 
             and input.UserInputState == Enum.UserInputState.Begin and not dragging and not isResizing then
-            if DraggingXPos.IsMouseOverFrame(DragFrame, input.Position) then
+            if DraggingXPosSlider.IsMouseOverFrame(DragFrame, input.Position) then
                 dragging = true
                 dragStart = input.Position
                 startPos = MainFrame.Position
@@ -7192,7 +7338,6 @@ function ah.New(aj,ak)
 
     local ay=ak.Tab.UIElements.ContainerFrame
 
-    -- Create callback table for drag detector
     local dragCallbacks = {
         OnDragStart = function()
             if ak.Window.NewElements then
@@ -7233,13 +7378,8 @@ function ah.New(aj,ak)
             ay.ScrollingEnabled = true
             if ax then ax:Close(false) end
         end,
-        OnClick = function()
-            -- Single click handling (optional)
-        end
     }
-
-    -- Store cleanup function and setResizing
-    local dragCleanup, setResizing = DraggingXPos.MakeDraggable(
+    local dragCleanup, setResizing = DraggingXPosSlider.MakeDraggable(
         al.UIElements.SliderIcon,
         al.UIElements.SliderIcon.Frame.Thumb,
         dragCallbacks
