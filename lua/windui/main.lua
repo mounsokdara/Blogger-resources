@@ -6514,6 +6514,7 @@ end
 end)
 end
 
+
 function am.Animate(av,aw,ax)
 if not al.Window.IsToggleDragging then
 al.Window.IsToggleDragging=true
@@ -6531,7 +6532,7 @@ if ar then ar:Disconnect()end
 
 ar=ae.InputChanged:Connect(function(d)
 if not al.Window.IsToggleDragging then return end
-if d.UserInputType~=Enum.UserInputType.MouseMovement then return end
+if d.UserInputType~=Enum.UserInputType.MouseMovement and d.UserInputType~=Enum.UserInputType.Touch then return end
 if aB then return end
 
 local f=math.abs(d.Position.X-ay)
@@ -6560,7 +6561,7 @@ if as then as:Disconnect()end
 
 as=ae.InputEnded:Connect(function(d)
 if not al.Window.IsToggleDragging then return end
-if d.UserInputType~=Enum.UserInputType.MouseButton1 then return end
+if d.UserInputType~=Enum.UserInputType.MouseButton1 and d.UserInputType~=Enum.UserInputType.Touch then return end
 
 al.Window.IsToggleDragging=false
 
@@ -6775,43 +6776,19 @@ end
 
 ai:Set(ak,false,ah.Window.NewElements)
 
+
 if ah.Window.NewElements and am.Animate then
 if ai.Type=="Toggle"then
-local callbackTable = {
-OnClick = function()
-ai:Set(not ai.Value, nil, ah.Window.NewElements)
-end,
-OnDragStart = function()
-ah.Window.IsToggleDragging = true
-end,
-OnDragUpdate = function(position, dragDistance)
-local h = math.max(2, math.min(position.X.Offset, au-at-2))
-local j = math.clamp((h-2)/(au-at-4), 0, 1)
-local l,m,p = am:GetGlassFrame(j)
-aq.Frame.Bar.Highlight.Glass.Image = l
-aq.Frame.Bar.Highlight.Glass.ImageRectSize = m
-aq.Frame.Bar.Highlight.Glass.ImageRectOffset = p
-ad(aq.Frame, 0.12, {
-Position = UDim2.new(0, h, 0.5, 0)
-}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
-end,
-OnDragEnd = function(position, wasDragged)
-ah.Window.IsToggleDragging = false
-if not wasDragged then
-ai:Set(not ai.Value, nil, ah.Window.NewElements)
-else
-local f = aq.Frame.Position.X.Offset
-local g = f + at/2
-local h = g > au/2
-ai:Set(h, true, false)
+aa.AddSignal(al.ToggleFrame.Hitbox.InputBegan,function(an)
+if not ah.Window.IsToggleDragging and an.UserInputType==Enum.UserInputType.MouseButton1 or an.UserInputType==Enum.UserInputType.Touch then
+am:Animate(an,ai)
 end
-ad(aq.Frame.Bar.UIScale,0.23,{Scale=1},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-ad(aq.Frame.Bar.Highlight.BarOverlay,0.23,{ImageTransparency=0},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+end)
 end
-}
-DraggingXPosToggle.MakeDraggable(aq.Frame, al.ToggleFrame.Hitbox, callbackTable)
-end
-end
+
+
+
+
 
 else
 if ai.Type=="Toggle"then
