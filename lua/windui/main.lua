@@ -6514,99 +6514,134 @@ end
 end)
 end
 
-function am.Animate(av, aw, ax)
-    if not al.Window.IsToggleDragging then
-        local toggleFrame = aq.Frame
-        local absPos = toggleFrame.AbsolutePosition
-        local absSize = toggleFrame.AbsoluteSize
-        local inputPos = aw.Position
-        
-        if not (inputPos.X >= absPos.X and inputPos.X <= absPos.X + absSize.X and
-                inputPos.Y >= absPos.Y and inputPos.Y <= absPos.Y + absSize.Y) then
-            return
-        end
-        
-        al.Window.IsToggleDragging = true
-        
-        local ay = aw.Position.X
-        local aA = aq.Frame.Position.X.Offset
-        local aB = false
-        local b = false
-        local dragDistance = 0
-        local DRAG_THRESHOLD =1
-        local dragStartX = ay
-        local startOffset = aA
-        local clickStartTime = tick()
-        local CLICK_TIME_THRESHOLD = 0.2
-        
-        ad(aq.Frame.Bar.UIScale, 0.28, {Scale = 1.5}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
-        ad(aq.Frame.Bar.Highlight.BarOverlay, 0.28, {ImageTransparency = .86}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
-        
-        if ar then ar:Disconnect() end
-        
-        ar = ae.InputChanged:Connect(function(d)
-            if not al.Window.IsToggleDragging then return end
-            if aB then return end
-            
-            local deltaX = d.Position.X - dragStartX
-            local deltaY = d.Position.Y - ay
-            dragDistance = math.sqrt(deltaX^2 + deltaY^2)
-            
-            if not b and dragDistance > DRAG_THRESHOLD then
-                b = true
-            end
-            
-            if b then
-                local newOffset = math.max(2, math.min(startOffset + deltaX, au - at - 2))
-                local progress = math.clamp((newOffset - 2) / (au - at - 4), 0, 1)
-                
-                local l, m, p = am:GetGlassFrame(progress)
-                aq.Frame.Bar.Highlight.Glass.Image = l
-                aq.Frame.Bar.Highlight.Glass.ImageRectSize = m
-                aq.Frame.Bar.Highlight.Glass.ImageRectOffset = p
-                
-                ad(aq.Frame, 0.12, {
-                    Position = UDim2.new(0, newOffset, 0.5, 0)
-                }, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
-            end
-        end)
-        
-        if as then as:Disconnect() end
-        
-        as = ae.InputEnded:Connect(function(d)
-            if not al.Window.IsToggleDragging then return end
-            
-            al.Window.IsToggleDragging = false
-            
-            if ar then ar:Disconnect(); ar = nil end
-            if as then as:Disconnect(); as = nil end
-            
-            if aB then return end
-            
-            local dragDuration = tick() - clickStartTime
-            local wasClick = dragDuration < CLICK_TIME_THRESHOLD and dragDistance < DRAG_THRESHOLD
-            
-            if not b and wasClick then
-                ax:Set(not ax.Value, true, false)
-            elseif b then
-                local currentOffset = aq.Frame.Position.X.Offset
-                local middlePoint = currentOffset + (at / 2)
-                local shouldBeOn = middlePoint > (au / 2)
-                ax:Set(shouldBeOn, true, false)
-            else
-                ax:Set(not ax.Value, true, false)
-            end
-            
-            ad(aq.Frame.Bar.UIScale, 0.23, {Scale = 1}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
-            ad(aq.Frame.Bar.Highlight.BarOverlay, 0.23, {ImageTransparency = 0}, Enum.EasingStyle.Quint, Enum.EasingDirection.Out):Play()
-            
-            dragDistance = 0
-            b = false
-        end)
-    end
+function am.Animate(av,aw,ax)
+if not al.Window.IsToggleDragging then
+al.Window.IsToggleDragging=true
+
+local ay=aw.Position.X
+local az=aw.Position.Y
+local aA=aq.Frame.Position.X.Offset
+local aB=false
+local b=false
+local touchData = {}
+local activeTouch = nil
+
+if aw.UserInputType == Enum.UserInputType.Touch then
+activeTouch = aw
+touchData[aw] = {
+startX = ay,
+startY = az,
+hasMoved = false,
+startTime = tick()
+}
 end
 
-return ap, am
+ad(aq.Frame.Bar.UIScale,0.28,{Scale=1.5},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+ad(aq.Frame.Bar.Highlight.BarOverlay,0.28,{ImageTransparency=.86},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+
+if ar then ar:Disconnect()end
+
+ar=ae.InputChanged:Connect(function(d)
+if not al.Window.IsToggleDragging then return end
+if d.UserInputType~=Enum.UserInputType.MouseMovement and d.UserInputType~=Enum.UserInputType.Touch then return end
+if aB then return end
+
+local currentData = nil
+
+if d.UserInputType == Enum.UserInputType.Touch then
+if not touchData[d] then return end
+currentData = touchData[d]
+else
+if not touchData[1] then
+touchData[1] = {
+startX = ay,
+startY = az,
+hasMoved = false,
+startTime = tick()
+}
+end
+currentData = touchData[1]
+end
+
+local f=math.abs(d.Position.X-currentData.startX)
+local g=math.abs(d.Position.Y-currentData.startY)
+
+if not currentData.hasMoved and f>8 then
+currentData.hasMoved=true
+b=true
+end
+
+local h=d.Position.X-currentData.startX
+local i=math.max(2,math.min(aA+h,au-at-2))
+
+local j=math.clamp((i-2)/(au-at-4),0,1)
+
+local l,m,p=am:GetGlassFrame(j)
+aq.Frame.Bar.Highlight.Glass.Image=l
+aq.Frame.Bar.Highlight.Glass.ImageRectSize=m
+aq.Frame.Bar.Highlight.Glass.ImageRectOffset=p
+
+ad(aq.Frame,0.12,{
+Position=UDim2.new(0,i,0.5,0)
+},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+end)
+
+if as then as:Disconnect()end
+
+as=ae.InputEnded:Connect(function(d)
+if not al.Window.IsToggleDragging then return end
+if d.UserInputType~=Enum.UserInputType.MouseButton1 and d.UserInputType~=Enum.UserInputType.Touch then return end
+
+local currentData = nil
+
+if d.UserInputType == Enum.UserInputType.Touch then
+if not touchData[d] then return end
+currentData = touchData[d]
+else
+if not touchData[1] then
+touchData[1] = {
+startX = ay,
+startY = az,
+hasMoved = false,
+startTime = tick()
+}
+end
+currentData = touchData[1]
+end
+
+al.Window.IsToggleDragging=false
+
+if ar then ar:Disconnect()ar=nil end
+if as then as:Disconnect()as=nil end
+
+if aB then return end
+
+local elapsedTime = tick() - currentData.startTime
+
+if not currentData.hasMoved and elapsedTime < 0.3 then
+ax:Set(not ax.Value,true,false)
+else
+local f=aq.Frame.Position.X.Offset
+local g=f+at/2
+local h=g>au/2
+ax:Set(h,true,false)
+end
+
+ad(aq.Frame.Bar.UIScale,0.23,{Scale=1},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+ad(aq.Frame.Bar.Highlight.BarOverlay,0.23,{ImageTransparency=0},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
+
+if d.UserInputType == Enum.UserInputType.Touch then
+touchData[d] = nil
+else
+touchData[1] = nil
+end
+
+b = false
+end)
+end
+end
+
+return ap,am
 end
 
 return aa end function a.F()
@@ -6616,10 +6651,13 @@ local ab=a.load'c'local ac=
 ab.New
 local ad=ab.Tween
 
+
 function aa.New(ae,af,ag,ah,ai,aj)
 local ak={}
 
 af=af or"sfsymbols:checkmark"
+
+local al=9
 
 local am=ab.Image(
 af,
@@ -6635,7 +6673,8 @@ am.Size=UDim2.new(1,-26+ag,1,-26+ag)
 am.AnchorPoint=Vector2.new(0.5,0.5)
 am.Position=UDim2.new(0.5,0,0.5,0)
 
-local an=ab.NewRoundFrame(9,"Squircle",{
+
+local an=ab.NewRoundFrame(al,"Squircle",{
 ImageTransparency=.85,
 ThemeTag={
 ImageColor3="Text"
@@ -6643,7 +6682,7 @@ ImageColor3="Text"
 Parent=ah,
 Size=UDim2.new(0,26,0,26),
 },{
-ab.NewRoundFrame(9,"Squircle",{
+ab.NewRoundFrame(al,"Squircle",{
 Size=UDim2.new(1,0,1,0),
 Name="Layer",
 ThemeTag={
@@ -6651,15 +6690,16 @@ ImageColor3="Checkbox",
 },
 ImageTransparency=1,
 }),
-ab.NewRoundFrame(9,"Glass-1.4",{
+ab.NewRoundFrame(al,"Glass-1.4",{
 Size=UDim2.new(1,0,1,0),
 Name="Stroke",
 ThemeTag={
 ImageColor3="CheckboxBorder",
 ImageTransparency="CheckboxBorderTransparency",
 },
-},{
 }),
+
+
 am,
 },true)
 
@@ -6668,6 +6708,9 @@ if ap then
 ad(an.Layer,0.06,{
 ImageTransparency=0,
 }):Play()
+
+
+
 ad(am.ImageLabel,0.06,{
 ImageTransparency=0,
 }):Play()
@@ -6675,6 +6718,9 @@ else
 ad(an.Layer,0.05,{
 ImageTransparency=1,
 }):Play()
+
+
+
 ad(am.ImageLabel,0.06,{
 ImageTransparency=1,
 }):Play()
@@ -6689,6 +6735,7 @@ end
 
 return an,ak
 end
+
 
 return aa end function a.G()
 local aa=a.load'c'local ab=
@@ -6717,6 +6764,10 @@ UIElements={}
 ai.ToggleFrame=a.load'B'{
 Title=ai.Title,
 Desc=ai.Desc,
+
+
+
+
 Window=ah.Window,
 Parent=ah.Parent,
 TextOffset=(52),
@@ -6733,12 +6784,13 @@ if ai.Value==nil then
 ai.Value=false
 end
 
+
+
 function ai.Lock(ak)
 ai.Locked=true
 aj=false
 return ai.ToggleFrame:Lock(ai.LockedTitle)
 end
-
 function ai.Unlock(ak)
 ai.Locked=false
 aj=true
@@ -6773,6 +6825,7 @@ end
 
 ai:Set(ak,false,ah.Window.NewElements)
 
+
 if ah.Window.NewElements and am.Animate then
 if ai.Type=="Toggle"then
 aa.AddSignal(al.ToggleFrame.Hitbox.InputBegan,function(an)
@@ -6781,6 +6834,11 @@ am:Animate(an,ai)
 end
 end)
 end
+
+
+
+
+
 else
 if ai.Type=="Toggle"then
 aa.AddSignal(al.ToggleFrame.Hitbox.MouseButton1Click,function()
@@ -8878,7 +8936,6 @@ Default=at.Value or at.Default,
 Callback=at.Callback,
 Transparency=at.Transparency,
 UIElements=at.UIElements,
-
 TextPadding=10,
 }
 
@@ -8897,8 +8954,6 @@ local az=ay.Create(nil,"Dialog",au,av,au.UIElements.Main.Main)
 ax.ColorpickerFrame=az
 
 az.UIElements.Main.Size=UDim2.new(1,0,0,0)
-
-
 
 local aA,aB,b=ax.Hue,ax.Sat,ax.Vib
 
@@ -8922,10 +8977,6 @@ PaddingRight=UDim.new(0,ax.TextPadding/2),
 PaddingBottom=UDim.new(0,ax.TextPadding/2),
 })
 })
-
-
-
-
 
 local d=ae("Frame",{
 Size=UDim2.new(0,14,0,14),
@@ -8979,7 +9030,6 @@ NumberSequenceKeypoint.new(1.0,0.1),
 }
 })
 }),
-
 d,
 })
 
@@ -8995,10 +9045,6 @@ Padding=UDim.new(0,4),
 FillDirection="Vertical",
 })
 })
-
-
-
-
 
 local f=ae("Frame",{
 BackgroundColor3=ax.Default,
@@ -9045,13 +9091,6 @@ NumberSequenceKeypoint.new(1.0,0.1),
 }
 })
 }),
-
-
-
-
-
-
-
 f,
 })
 
@@ -9079,13 +9118,6 @@ Parent=az.UIElements.Main,
 ae("UICorner",{
 CornerRadius=UDim.new(0,8),
 }),
-
-
-
-
-
-
-
 aa.NewRoundFrame(8,"SquircleOutline",{
 ThemeTag={
 ImageColor3="Outline",
@@ -9133,8 +9165,6 @@ Size=UDim2.new(0,14,0,14),
 AnchorPoint=Vector2.new(0.5,0.5),
 Position=UDim2.new(0.5,0,0,0),
 Parent=l,
-
-
 BackgroundColor3=ax.Default
 },{
 ae("UIStroke",{
@@ -9160,7 +9190,6 @@ CornerRadius=UDim.new(1,0),
 j,
 l,
 })
-
 
 function CreateNewInput(r,u)
 local v=aq(r,nil,ax.UIElements.Inputs)
@@ -9222,12 +9251,6 @@ Padding=UDim.new(0,6),
 FillDirection="Horizontal",
 HorizontalAlignment="Right",
 }),
-
-
-
-
-
-
 })
 
 local B={
@@ -9250,8 +9273,6 @@ G.Size=UDim2.new(0.5,-3,0,40)
 G.AutomaticSize="None"
 end
 
-
-
 local C,F,G
 if ax.Transparency then
 local H=ae("Frame",{
@@ -9268,7 +9289,6 @@ ThemeTag={
 BackgroundColor3="Text",
 },
 Parent=H,
-
 },{
 ae("UIStroke",{
 Thickness=2,
@@ -9280,7 +9300,6 @@ Color="Text",
 ae("UICorner",{
 CornerRadius=UDim.new(1,0),
 })
-
 })
 
 G=ae("Frame",{
@@ -9332,7 +9351,6 @@ J=tostring(J)
 return J:find"%."and tonumber(J:sub(1,J:find"%."+L))or J
 end
 
-
 function ax.Update(H,J,L)
 if J then aA,aB,b=Color3.toHSV(J)else aA,aB,b=ax.Hue,ax.Sat,ax.Vib end
 
@@ -9360,15 +9378,10 @@ end
 
 ax:Update(ax.Default,ax.Transparency)
 
-
-
-
 function GetRGB()
 local H=Color3.fromHSV(ax.Hue,ax.Sat,ax.Vib)
 return{R=math.floor(H.r*255),G=math.floor(H.g*255),B=math.floor(H.b*255)}
 end
-
-
 
 function clamp(H,J,L)
 return math.clamp(tonumber(H)or 0,J,L)
@@ -9419,56 +9432,180 @@ end
 end)
 end
 
+local UserInputService = game:GetService("UserInputService")
 
+local function IsPointInFrame(Frame, Point)
+local AbsPos=Frame.AbsolutePosition
+local AbsSize=Frame.AbsoluteSize
+return Point.X>=AbsPos.X and Point.X<=AbsPos.X+AbsSize.X and Point.Y>=AbsPos.Y and Point.Y<=AbsPos.Y+AbsSize.Y
+end
 
+local function ClampToFrame(Frame, Point)
+local AbsPos=Frame.AbsolutePosition
+local AbsSize=Frame.AbsoluteSize
+return Vector2.new(
+math.clamp(Point.X,AbsPos.X,AbsPos.X+AbsSize.X),
+math.clamp(Point.Y,AbsPos.Y,AbsPos.Y+AbsSize.Y)
+)
+end
+
+local function updateSatVibFromPosition(Position)
 local H=ax.UIElements.SatVibMap
-aa.AddSignal(H.InputBegan,function(J)
-if J.UserInputType==Enum.UserInputType.MouseButton1 or J.UserInputType==Enum.UserInputType.Touch then
-while aj:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)do
-local L=H.AbsolutePosition.X
-local M=L+H.AbsoluteSize.X
-local N=math.clamp(ao.X,L,M)
-
-local O=H.AbsolutePosition.Y
-local P=O+H.AbsoluteSize.Y
-local Q=math.clamp(ao.Y,O,P)
-
+local AbsPos=H.AbsolutePosition
+local AbsSize=H.AbsoluteSize
+local clampedPos=ClampToFrame(H,Position)
+local L=AbsPos.X
+local M=L+AbsSize.X
+local N=clampedPos.X
+local O=AbsPos.Y
+local P=O+AbsSize.Y
+local Q=clampedPos.Y
 ax.Sat=(N-L)/(M-L)
 ax.Vib=1-((Q-O)/(P-O))
 ax:Update()
+end
 
-am:Wait()
+local satVibActiveTouch=nil
+local satVibDragging=false
+local satVibInputChangedConn=nil
+local satVibInputEndedConn=nil
+
+local function cleanupSatVibDrag()
+if satVibInputChangedConn then satVibInputChangedConn:Disconnect() satVibInputChangedConn=nil end
+if satVibInputEndedConn then satVibInputEndedConn:Disconnect() satVibInputEndedConn=nil end
+satVibActiveTouch=nil
+satVibDragging=false
+end
+
+local function onSatVibInputChanged(input)
+if not satVibDragging then return end
+if satVibActiveTouch and input~=satVibActiveTouch then
+if input.UserInputType==Enum.UserInputType.Touch then return end
+end
+updateSatVibFromPosition(input.Position)
+end
+
+local function onSatVibInputEnded(input)
+if satVibActiveTouch and input==satVibActiveTouch then
+cleanupSatVibDrag()
+elseif not satVibActiveTouch and input.UserInputType==Enum.UserInputType.MouseButton1 then
+cleanupSatVibDrag()
+end
+end
+
+ax.UIElements.SatVibMap.InputBegan:Connect(function(input)
+if (input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch) and input.UserInputState==Enum.UserInputState.Begin and not satVibDragging then
+if IsPointInFrame(ax.UIElements.SatVibMap,input.Position) then
+satVibDragging=true
+satVibActiveTouch=input
+updateSatVibFromPosition(input.Position)
+satVibInputChangedConn=UserInputService.InputChanged:Connect(onSatVibInputChanged)
+satVibInputEndedConn=UserInputService.InputEnded:Connect(onSatVibInputEnded)
 end
 end
 end)
 
-aa.AddSignal(p.InputBegan,function(J)
-if J.UserInputType==Enum.UserInputType.MouseButton1 or J.UserInputType==Enum.UserInputType.Touch then
-while aj:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)do
-local L=p.AbsolutePosition.Y
-local M=L+p.AbsoluteSize.Y
-local N=math.clamp(ao.Y,L,M)
-
-ax.Hue=((N-L)/(M-L))
+local function updateHueFromPosition(Position)
+local pFrame=p
+local AbsPos=pFrame.AbsolutePosition
+local AbsSize=pFrame.AbsoluteSize
+local clampedPos=ClampToFrame(pFrame,Position)
+local L=AbsPos.Y
+local M=L+AbsSize.Y
+local N=clampedPos.Y
+ax.Hue=(N-L)/(M-L)
 ax:Update()
+end
 
-am:Wait()
+local hueActiveTouch=nil
+local hueDragging=false
+local hueInputChangedConn=nil
+local hueInputEndedConn=nil
+
+local function cleanupHueDrag()
+if hueInputChangedConn then hueInputChangedConn:Disconnect() hueInputChangedConn=nil end
+if hueInputEndedConn then hueInputEndedConn:Disconnect() hueInputEndedConn=nil end
+hueActiveTouch=nil
+hueDragging=false
+end
+
+local function onHueInputChanged(input)
+if not hueDragging then return end
+if hueActiveTouch and input~=hueActiveTouch then
+if input.UserInputType==Enum.UserInputType.Touch then return end
+end
+updateHueFromPosition(input.Position)
+end
+
+local function onHueInputEnded(input)
+if hueActiveTouch and input==hueActiveTouch then
+cleanupHueDrag()
+elseif not hueActiveTouch and input.UserInputType==Enum.UserInputType.MouseButton1 then
+cleanupHueDrag()
+end
+end
+
+p.InputBegan:Connect(function(input)
+if (input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch) and input.UserInputState==Enum.UserInputState.Begin and not hueDragging then
+if IsPointInFrame(p,input.Position) then
+hueDragging=true
+hueActiveTouch=input
+updateHueFromPosition(input.Position)
+hueInputChangedConn=UserInputService.InputChanged:Connect(onHueInputChanged)
+hueInputEndedConn=UserInputService.InputEnded:Connect(onHueInputEnded)
 end
 end
 end)
 
 if ax.Transparency then
-aa.AddSignal(C.InputBegan,function(J)
-if J.UserInputType==Enum.UserInputType.MouseButton1 or J.UserInputType==Enum.UserInputType.Touch then
-while aj:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)do
-local L=C.AbsolutePosition.Y
-local M=L+C.AbsoluteSize.Y
-local N=math.clamp(ao.Y,L,M)
-
+local function updateTransparencyFromPosition(Position)
+local transFrame=C
+local AbsPos=transFrame.AbsolutePosition
+local AbsSize=transFrame.AbsoluteSize
+local clampedPos=ClampToFrame(transFrame,Position)
+local L=AbsPos.Y
+local M=L+AbsSize.Y
+local N=clampedPos.Y
 ax.Transparency=1-((N-L)/(M-L))
 ax:Update()
+end
 
-am:Wait()
+local transActiveTouch=nil
+local transDragging=false
+local transInputChangedConn=nil
+local transInputEndedConn=nil
+
+local function cleanupTransDrag()
+if transInputChangedConn then transInputChangedConn:Disconnect() transInputChangedConn=nil end
+if transInputEndedConn then transInputEndedConn:Disconnect() transInputEndedConn=nil end
+transActiveTouch=nil
+transDragging=false
+end
+
+local function onTransInputChanged(input)
+if not transDragging then return end
+if transActiveTouch and input~=transActiveTouch then
+if input.UserInputType==Enum.UserInputType.Touch then return end
+end
+updateTransparencyFromPosition(input.Position)
+end
+
+local function onTransInputEnded(input)
+if transActiveTouch and input==transActiveTouch then
+cleanupTransDrag()
+elseif not transActiveTouch and input.UserInputType==Enum.UserInputType.MouseButton1 then
+cleanupTransDrag()
+end
+end
+
+C.InputBegan:Connect(function(input)
+if (input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch) and input.UserInputState==Enum.UserInputState.Begin and not transDragging then
+if IsPointInFrame(C,input.Position) then
+transDragging=true
+transActiveTouch=input
+updateTransparencyFromPosition(input.Position)
+transInputChangedConn=UserInputService.InputChanged:Connect(onTransInputChanged)
+transInputEndedConn=UserInputService.InputEnded:Connect(onTransInputEnded)
 end
 end
 end)
@@ -9486,15 +9623,12 @@ Locked=at.Locked or false,
 LockedTitle=at.LockedTitle,
 Default=at.Default or Color3.new(1,1,1),
 Callback=at.Callback or function()end,
-
 UIScale=at.UIScale,
 Transparency=at.Transparency,
 UIElements={}
 }
 
 local av=true
-
-
 
 au.ColorpickerFrame=a.load'B'{
 Title=au.Title,
@@ -9520,12 +9654,12 @@ Position=UDim2.new(1,0,0,0),
 ZIndex=2
 },nil,true)
 
-
 function au.Lock(aw)
 au.Locked=true
 av=false
 return au.ColorpickerFrame:Lock(au.LockedTitle)
 end
+
 function au.Unlock(aw)
 au.Locked=false
 av=true
@@ -9535,7 +9669,6 @@ end
 if au.Locked then
 au:Lock()
 end
-
 
 function au.Update(aw,ax,ay)
 au.UIElements.Colorpicker.ImageTransparency=ay or 0
